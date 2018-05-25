@@ -44,7 +44,11 @@
     }
 
     function onMessage(evt) {
-        writeToScreen("response: " + decoder(evt.data) + '\n');
+        var data = decoder(evt.data)
+        writeToScreen("response: " + data + '\n');
+
+        //
+        addTanks(data)
     }
 
     function onError(evt) {
@@ -87,18 +91,30 @@
 
         // create a wrapper around native canvas element (with id="c")
         var canvas = new fabric.Canvas('c');
-
+        window.battleField = canvas
+    }
+    function addTanks(tanks) {
+        for(i=0;i<tanks.length;i++){
+            addTank(tanks[i])
+        }
+    }
+    function addTank(tank) {
+        console.log(tank)
+        var left = Number(tank.x)
+        var top = Number(tank.y)
+        var width = Number(tank.width)
+        var height = Number(tank.height)
         // create a rectangle object
         var rect = new fabric.Rect({
-            left: 100,
-            top: 100,
+            left: left,
+            top: top,
             fill: 'red',
-            width: 20,
-            height: 20
+            width: width,
+            height: height
         });
 
         // "add" rectangle onto canvas
-        canvas.add(rect);
+        window.battleField.add(rect);
     }
 
     /*websocket消息解码器
@@ -118,6 +134,7 @@
             }
             target.push(row)
         }
+        console.log(target)
         return target
     }
 

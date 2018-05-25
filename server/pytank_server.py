@@ -8,7 +8,9 @@ from server.tank.point import Point
 from server.tank.barrier import Barrier
 from server.websocket_server import SimpleBroadServer, SimpleWebSocketServer
 from multiprocessing import Queue, Process
+import os
 
+WEBSOCKET_CLIENT_URL = '../client/websocket.html'
 
 def updateTanks(bt: Battlefield):
     q = Queue()
@@ -26,8 +28,11 @@ def updateTanks(bt: Battlefield):
 def start_websocket_server(queue: Queue):
     SimpleBroadServer.queue = queue
     server = SimpleWebSocketServer('', 8000, SimpleBroadServer)
+    open_websocket_client(WEBSOCKET_CLIENT_URL)
     server.serveforever()
 
+def open_websocket_client(url):
+    os.popen('chromium-browser ' + url+'&')
 
 def main():
     bt = Battlefield(600, 400)
