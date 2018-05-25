@@ -44,7 +44,7 @@ class Battlefield(RectObject):
         height = _tank.height
 
         if pos.x <= 0 or (pos.x + width) >= self.width or pos.y <= 0 or (pos.y + height) >= self.height:
-            print('{}到达战场边沿'.format(_tank.name))
+            # print('{}到达战场边沿'.format(_tank.name))
             return True
         return False
 

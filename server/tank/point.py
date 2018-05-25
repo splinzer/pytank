@@ -20,3 +20,9 @@ class Point():
         self.x = x
         self.y = y
 
+    def __str__(self):
+        return 'x:{}|y:{}'.format(self.x, self.y)
+
+
+if __name__ == '__main__':
+    print(Point(2, 3))

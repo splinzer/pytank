@@ -102,7 +102,7 @@ class Tank(RectObject):
     def update(self):
         if self.status == STATUS_MOVING:
             self.move_step(self.direction, self.velocity)
-        print(self.name, self.position.x, self.position.y)
+        # print(self.name, self.position.x, self.position.y)
 
 
 def main():

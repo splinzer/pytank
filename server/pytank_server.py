@@ -6,21 +6,26 @@ from server.tank.tank import *
 from server.tank.battlefield import *
 from server.tank.point import Point
 from server.tank.barrier import Barrier
-from multiprocessing import Queue, Process
 from server.websocket_server import SimpleBroadServer, SimpleWebSocketServer
+from multiprocessing import Queue, Process
 
 
-def updateTanks(bt: Battlefield, queue: Queue):
+def updateTanks(bt: Battlefield):
+    q = Queue()
+    websocket_p = Process(target=start_websocket_server, name='websocket', args=(q,))
+    websocket_p.start()
+
     n = 400
     while n:
         bt.update()
+        q.put(bt)
         # n -= 1
         sleep(0.5)
 
 
-def broadCast():
+def start_websocket_server(queue: Queue):
+    SimpleBroadServer.queue = queue
     server = SimpleWebSocketServer('', 8000, SimpleBroadServer)
-
     server.serveforever()
 
 
@@ -41,15 +46,10 @@ def main():
     bt.add_tank(t1)
     bt.add_tank(t2)
 
-    q = Queue()
-    update_p = Process(target=updateTanks, name='updateprocess', args=(bt, q))
-    websocket_p = Process(target=None, name='websocket')
-
+    update_p = Process(target=updateTanks, name='updateprocess', args=(bt,))
     update_p.start()
-    websocket_p.start()
-
     update_p.join()
-    websocket_p.join()
+
 
 
 if __name__ == '__main__':
