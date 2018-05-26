@@ -116,7 +116,7 @@ class RectObject():
             x -= velocity
         elif direction == RectObject.DIRECTION_RIGHT:
             x += velocity
-        print(x, y)
+        print(self.name, x, y)
         self.set_position(x, y)
 
     def get_status(self):

@@ -10,14 +10,19 @@ from multiprocessing import Queue, Process
 from time import sleep
 import os
 
-# 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = '/client/websocket.html'
 # 战场更新频率
 FRAMERATE = 0.1
+# webscoket服务器host
+WEBSOCKET_HOST = ''
+# webscoket服务器端口
+WEBSOCKET_PORT = 8000
+# 观战网页文件的本地地址
+WEBSOCKET_CLIENT_URL = '/client/websocket.html'
 
 
-def updateTanks(bt: Battlefield):
+def mainloop(bt: Battlefield):
     q = Queue()
+    # 通过websocket server对外提供战场信息更新
     websocket_p = Process(target=start_websocket_server, name='websocket', args=(q,))
     websocket_p.start()
 
@@ -32,7 +37,7 @@ def updateTanks(bt: Battlefield):
 def start_websocket_server(queue: Queue):
     SimpleBroadServer.queue = queue
     SimpleBroadServer.framerate = FRAMERATE
-    server = SimpleWebSocketServer('', 8000, SimpleBroadServer)
+    server = SimpleWebSocketServer(WEBSOCKET_HOST, WEBSOCKET_PORT, SimpleBroadServer)
     open_websocket_client(WEBSOCKET_CLIENT_URL)
     server.serveforever()
 
@@ -59,9 +64,9 @@ def main():
     bt.add_tank(t1)
     bt.add_tank(t2)
 
-    update_p = Process(target=updateTanks, name='updateprocess', args=(bt,))
-    update_p.start()
-    update_p.join()
+    main_p = Process(target=mainloop, args=(bt,))
+    main_p.start()
+    main_p.join()
 
 
 if __name__ == '__main__':

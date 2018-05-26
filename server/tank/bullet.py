@@ -17,8 +17,8 @@ class Bullet(RectObject):
 def main():
     t1 = Bullet('t1')
     t1.set_position(50, 50)
-    t1.set_status(STATUS_MOVING)
-    t1.set_direction(DIRECTION_LEFT)
+    t1.set_status(Bullet.STATUS_MOVING)
+    t1.set_direction(Bullet.DIRECTION_LEFT)
     for i in range(20):
         t1.update()
 

@@ -8,15 +8,15 @@
 
 
     function init() {
-        document.myform.url.value = "ws://localhost:8000/"
-        document.myform.inputtext.value = "Hello World!"
         document.myform.disconnectButton.disabled = true;
-
+        //自动连接websocket服务器
+        doConnect()
+        //初始化战场
         init_battlefield()
     }
 
     function doConnect() {
-        websocket = new WebSocket(document.myform.url.value);
+        websocket = new WebSocket("ws://localhost:8000/");
         websocket.onopen = function (evt) {
             onOpen(evt)
         };
@@ -44,10 +44,9 @@
     }
 
     function onMessage(evt) {
+        writeToScreen("response: " + evt.data + '\n');
         var data = decoder(evt.data)
-        writeToScreen("response: " + data + '\n');
-
-        //
+        //更新战场坦克
         updateTanks(data)
     }
 
@@ -61,10 +60,10 @@
 
     }
 
-    function doSend(message) {
-        writeToScreen("sent: " + message + '\n');
-        websocket.send(message);
-    }
+    // function doSend(message) {
+    //     writeToScreen("sent: " + message + '\n');
+    //     websocket.send(message);
+    // }
 
     function writeToScreen(message) {
         document.myform.outputtext.value += message
@@ -75,9 +74,9 @@
     window.addEventListener("load", init, false);
 
 
-    function sendText() {
-        doSend(document.myform.inputtext.value);
-    }
+    // function sendText() {
+    //     doSend(document.myform.inputtext.value);
+    // }
 
     function clearText() {
         document.myform.outputtext.value = "";
@@ -95,51 +94,55 @@
         window.tanks = []
     }
 
-    function updateTanks(tanks) {
-        for (i in tanks) {
-            updateTank(tanks[i])
-        }
-    }
-
-    function updateTank(tank) {
-        console.log(tank)
-        var left = Number(tank.x)
-        var top = Number(tank.y)
-        var width = Number(tank.width)
-        var height = Number(tank.height)
-
-        // "add" rectangle onto canvas
+    // 检测坦克是否已经存在于战场中
+    function exists(tank) {
         if (window.tanks.length) {
             for (i in window.tanks) {
                 if (window.tanks[i].name == tank.name) {
-                    //移动
-                    console.log('移动')
-                    window.tanks[i].set({'left': left, 'top': top});
-                    window.battleField.renderAll()
-                    return
+                    return true
                 }
             }
         }
-
-        console.log('添加')
-        var rect = new fabric.Rect({
-            left: left,
-            top: top,
-            fill: 'red',
-            width: width,
-            height: height
-        });
-        rect.name = tank.name
-        window.battleField.add(rect);
-        window.tanks.push(rect)
-
-
+        return false
     }
+
+    function updateTanks(tanks) {
+        for (n in tanks) {
+            tank = tanks[n]
+            console.log(tank.name, tank.x, tank.y)
+            var left = Number(tank.x)
+            var top = Number(tank.y)
+            var width = Number(tank.width)
+            var height = Number(tank.height)
+
+            if (exists(tank)) {
+                console.log('移动')
+                window.tanks[i].set({'left': left, 'top': top});
+                // window.battleField.renderAll()
+                window.battleField.requestRenderAll()
+            }
+            else {
+                console.log('添加')
+                var rect = new fabric.Rect({
+                    left: left,
+                    top: top,
+                    fill: 'red',
+                    width: width,
+                    height: height
+                });
+                rect.name = tank.name
+                window.battleField.add(rect);
+                window.tanks.push(rect)
+            }
+
+        }
+    }
+
 
     /*websocket消息解码器
     raw消息如下：
-    width:20|height:20|x:50|y:50|name:t1|life:100|oil:100|weapon:0|status:3|direction:2|velocity:5;
-    width:20|height:20|x:300|y:50|name:t2|life:100|oil:100|weapon:0|status:3|direction:3|velocity:5
+    name:t1|width:20|height:20|x:95|y:50|direction:3|velocity:5|life:100|oil:100|weapon:0|status:3;
+    name:t2|width:20|height:20|x:255|y:50|direction:2|velocity:5|life:100|oil:100|weapon:0|status:3
      */
     function decoder(str) {
         var target = []
@@ -158,29 +161,36 @@
 
 
 </script>
+<div style="width:600px;height:400px;border:1px solid gray;margin:10px auto">
 
-<div id="output"></div>
+    <canvas id='c' width="600" height="400"></canvas>
 
-<form name="myform">
-    <p>
-        <textarea name="outputtext" rows="20" cols="50"></textarea>
-    </p>
-    <p>
-        <textarea name="inputtext" cols="50"></textarea>
-    </p>
-    <p>
-        <textarea name="url" cols="50"></textarea>
-    </p>
-    <p>
-        <input type="button" name=sendButton value="Send" onClick="sendText();">
-        <input type="button" name=clearButton value="Clear" onClick="clearText();">
-        <input type="button" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
-        <input type="button" name=connectButton value="Connect" onClick="doConnect();">
-    </p>
-    <p>
-        <canvas id='c' width="600" height="400"></canvas>
-    </p>
+</div>
+<div style="margin:10px auto;width:100%;">
 
-</form>
+    <div id="output"></div>
+
+    <form name="myform">
+        <p>
+            <textarea name="outputtext" style="width:100%;height:300px"></textarea>
+        </p>
+        <!--<p>-->
+        <!--<textarea name="inputtext" cols="50"></textarea>-->
+        <!--</p>-->
+        <!--<p>-->
+        <!--<textarea name="url" cols="50"></textarea>-->
+        <!--</p>-->
+        <p>
+            <!--<input type="button" name=sendButton value="Send" onClick="sendText();">-->
+            <input type="button" name=clearButton value="Clear" onClick="clearText();">
+            <input type="button" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
+            <input type="button" name=connectButton value="Connect" onClick="doConnect();">
+        </p>
+
+
+    </form>
+</div>
+
+
 </html> 
 
