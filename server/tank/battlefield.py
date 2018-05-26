@@ -6,9 +6,6 @@ from server.tank.barrier import Barrier
 from server.tank.rectobject import RectObject
 from server.tank.tank import Tank
 from server.tank.tank import *
-from server.tank.point import Point
-from multiprocessing import Process, Queue
-from time import sleep
 
 
 class Battlefield(RectObject):
@@ -23,7 +20,7 @@ class Battlefield(RectObject):
         :param width:战场宽度
         :param height: 战场高度
         """
-        super().__init__(width, height, Point(0, 0))
+        super().__init__('Battlefield', width, height, 0, 0)
         self.tanks = []
         self.barriers = []
 
@@ -39,11 +36,14 @@ class Battlefield(RectObject):
         :param _tank:坦克对象
         :return:布尔值，在战场边沿为True
         """
-        pos = _tank.position
+        # import pdb;pdb.set_trace()
+        pos = _tank.get_position()
+        x = pos[0]
+        y = pos[1]
         width = _tank.width
         height = _tank.height
 
-        if pos.x <= 0 or (pos.x + width) >= self.width or pos.y <= 0 or (pos.y + height) >= self.height:
+        if x <= 0 or (x + width) >= self.width or y <= 0 or (y + height) >= self.height:
             # print('{}到达战场边沿'.format(_tank.name))
             return True
         return False
@@ -59,6 +59,7 @@ class Battlefield(RectObject):
         """
         for _tank in self.tanks:
             if self.is_on_edge(_tank):
+                print('tank:{}抵达边界停止'.format(_tank))
                 _tank.stop()
             # 先将状态重置为正常，而后根据碰撞检测再修改设置
             # _tank.ready()
@@ -70,6 +71,7 @@ class Battlefield(RectObject):
 
             for barrier in self.barriers:
                 if self.isCollide(_tank, barrier):
+                    print('tank:{}碰到障碍物停止'.format(_tank))
                     _tank.stop()
 
     def add_barrier(self, barrier: Barrier) -> list:

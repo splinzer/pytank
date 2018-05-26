@@ -9,8 +9,8 @@ from server.tank.battlefield import Battlefield
     数据组间以分号分隔，属性间以冒号分隔
 
     例如：
-    width:20|height:20|position:50,50|name:t1|life:100|oil:100|weapon:0|status:3|direction:2|velocity:5;
-    width:20|height:20|position:300,50|name:t2|life:100|oil:100|weapon:0|status:3|direction:3|velocity:5
+    width:20|height:20|x:50|y:50|name:t1|life:100|oil:100|weapon:0|status:3|direction:2|velocity:5;
+    width:20|height:20|x:300|y:50|name:t2|life:100|oil:100|weapon:0|status:3|direction:3|velocity:5
 """
 
 

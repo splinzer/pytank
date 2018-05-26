@@ -48,7 +48,7 @@
         writeToScreen("response: " + data + '\n');
 
         //
-        addTanks(data)
+        updateTanks(data)
     }
 
     function onError(evt) {
@@ -92,19 +92,36 @@
         // create a wrapper around native canvas element (with id="c")
         var canvas = new fabric.Canvas('c');
         window.battleField = canvas
+        window.tanks = []
     }
-    function addTanks(tanks) {
-        for(i=0;i<tanks.length;i++){
-            addTank(tanks[i])
+
+    function updateTanks(tanks) {
+        for (i in tanks) {
+            updateTank(tanks[i])
         }
     }
-    function addTank(tank) {
+
+    function updateTank(tank) {
         console.log(tank)
         var left = Number(tank.x)
         var top = Number(tank.y)
         var width = Number(tank.width)
         var height = Number(tank.height)
-        // create a rectangle object
+
+        // "add" rectangle onto canvas
+        if (window.tanks.length) {
+            for (i in window.tanks) {
+                if (window.tanks[i].name == tank.name) {
+                    //移动
+                    console.log('移动')
+                    window.tanks[i].set({'left': left, 'top': top});
+                    window.battleField.renderAll()
+                    return
+                }
+            }
+        }
+
+        console.log('添加')
         var rect = new fabric.Rect({
             left: left,
             top: top,
@@ -112,9 +129,11 @@
             width: width,
             height: height
         });
-
-        // "add" rectangle onto canvas
+        rect.name = tank.name
         window.battleField.add(rect);
+        window.tanks.push(rect)
+
+
     }
 
     /*websocket消息解码器
@@ -134,7 +153,6 @@
             }
             target.push(row)
         }
-        console.log(target)
         return target
     }
 

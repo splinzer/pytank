@@ -33,7 +33,7 @@ class SimpleBroadServer(WebSocket):
             coder = InfoCoder()
             data = coder.encoder(data)
             self.sendMessage(data)
-            sleep(1)
+            sleep(self.framerate)
 
 
 if __name__ == "__main__":
