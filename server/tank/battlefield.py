@@ -20,17 +20,12 @@ class Battlefield(RectObject):
         :param width:战场宽度
         :param height: 战场高度
         """
-        super().__init__('Battlefield', width, height, 0, 0)
+        super().__init__(width, height, 0, 0)
         self.tanks = []
         self.barriers = []
+        self.bullets = []
 
-    def set_all_tanks(self):
-        pass
-
-    def fire(self, name, direction):
-        pass
-
-    def is_on_edge(self, _tank) -> bool:
+    def is_on_edge(self, _tank: RectObject) -> bool:
         """
         检测所给坦克是否到达战场边沿
         :param _tank:坦克对象
@@ -83,7 +78,7 @@ class Battlefield(RectObject):
         self.barriers.append(barrier)
         return self.barriers
 
-    def get_all_barrier(self) -> list:
+    def get_barriers(self) -> list:
         """
         返回战场中所有的障碍物
         :return: 障碍物实例列表
@@ -97,8 +92,15 @@ class Battlefield(RectObject):
         :return: 战场中所有坦克的列表
         """
         # _tank.set_position(self.get_random_position(_tank))
+        _tank.set_battlefield(self)
         self.tanks.append(_tank)
         return self.tanks
+
+    def add_bullet(self, _bullet: Bullet):
+        self.bullets.append(_bullet)
+
+    def get_bullets(self):
+        return self.bullets
 
     def get_random_position(self, _object):
         """
@@ -115,18 +117,26 @@ class Battlefield(RectObject):
             if self.isCollide(barrier, _object):
                 return
 
-    def get_all_tanks(self):
+    def get_tanks(self):
         """
         返回战场中所有的坦克
         :return: 坦克列表
         """
         return self.tanks
 
-    def update_all_tanks(self):
-        for i in self.tanks:
-            i.update()
+    def get_all_objects(self):
+        return self.get_tanks() + self.get_bullets()
+
+    def update_tanks(self):
+        for _tank in self.tanks:
+            _tank.update()
+
+    def update_bullets(self):
+        for _bullet in self.bullets:
+            _bullet.update()
 
     # 计算并刷新数据
     def update(self):
-        self.update_all_tanks()
+        self.update_tanks()
+        self.update_bullets()
         self.collision_stat_update()

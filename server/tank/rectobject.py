@@ -23,7 +23,7 @@ class RectObject():
     DIRECTION_LEFT = 2
     DIRECTION_RIGHT = 3
 
-    def __init__(self, name: str, width: int, height: int, x: int = 0, y: int = 0):
+    def __init__(self, width: int, height: int, x: int = 0, y: int = 0):
         """
         初始化
         :param name: 名称
@@ -32,16 +32,17 @@ class RectObject():
         :param x: x坐标（以右上角为原点，向左为x轴）
         :param y: y坐标（以右上角为原点，向下为y轴）
         """
-        self.name = name
+        self.name = 'RectObject'
         self.width = width
         self.height = height
+        self.weapon_type = 'RectObject'
         # 以左上角为坐标基准点
         self.x = x
         self.y = y
         # 默认方向向上
-        self.direction = RectObject.DIRECTION_UP
+        self.direction = self.DIRECTION_UP
         # 默认速度最大
-        self.velocity = RectObject.MAX_VELOCITY
+        self.velocity = self.MAX_VELOCITY
 
     def get_velocity(self):
         return self.velocity
@@ -106,15 +107,15 @@ class RectObject():
         """
         x = self.x
         y = self.y
-        if velocity > RectObject.MAX_VELOCITY:
-            velocity = RectObject.MAX_VELOCITY
-        if direction == RectObject.DIRECTION_UP:
+        if velocity > self.MAX_VELOCITY:
+            velocity = self.MAX_VELOCITY
+        if direction == self.DIRECTION_UP:
             y -= velocity
-        elif direction == RectObject.DIRECTION_DOWN:
+        elif direction == self.DIRECTION_DOWN:
             y += velocity
-        elif direction == RectObject.DIRECTION_LEFT:
+        elif direction == self.DIRECTION_LEFT:
             x -= velocity
-        elif direction == RectObject.DIRECTION_RIGHT:
+        elif direction == self.DIRECTION_RIGHT:
             x += velocity
         print(self.name, x, y)
         self.set_position(x, y)
@@ -126,12 +127,12 @@ class RectObject():
         self.status = status
 
     def stop(self):
-        self.set_status(RectObject.STATUS_STOP)
+        self.set_status(self.STATUS_STOP)
 
     def ready(self):
-        self.set_status(RectObject.STATUS_READY)
+        self.set_status(self.STATUS_READY)
 
     def update(self):
         # print('status:{},STATUS_MOVING:{}'.format(self.status,STATUS_MOVING))
-        if self.status == RectObject.STATUS_MOVING:
+        if self.status == self.STATUS_MOVING:
             self.move_step(self.direction, self.velocity)
