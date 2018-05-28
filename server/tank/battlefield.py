@@ -21,6 +21,7 @@ class Battlefield(RectObject):
         :param height: 战场高度
         """
         super().__init__(width, height, 0, 0)
+        self.type = 'battlefield'
         self.tanks = []
         self.barriers = []
         self.bullets = []
@@ -53,21 +54,31 @@ class Battlefield(RectObject):
         3.每个坦克自己每一次移动前预测是否会发生碰撞，如果会发生，则停止
         """
         for _tank in self.tanks:
+
+            # 坦克达到战场边界停止移动
             if self.is_on_edge(_tank):
                 print('tank:{}抵达边界停止'.format(_tank))
                 _tank.stop()
+
             # 先将状态重置为正常，而后根据碰撞检测再修改设置
             # _tank.ready()
             for other_tank in self.tanks:
                 if _tank != other_tank and self.isCollide(_tank, other_tank):
-                    print('{}和{}发生碰撞'.format(_tank.name, other_tank.name))
+                    # print('{}和{}发生碰撞'.format(_tank.name, other_tank.name))
                     _tank.stop()
                     other_tank.stop()
 
             for barrier in self.barriers:
                 if self.isCollide(_tank, barrier):
-                    print('tank:{}碰到障碍物停止'.format(_tank))
+                    # print('tank:{}碰到障碍物停止'.format(_tank))
                     _tank.stop()
+
+        # 当子弹到达战场边界自毁
+        for _bullet in self.bullets:
+            if self.is_on_edge(_bullet):
+                print('子弹：{}抵达边界销毁'.format(_bullet))
+                # self.bullets.remove(_bullet)
+                _bullet.die(self.remove_object)
 
     def add_barrier(self, barrier: Barrier) -> list:
         """
@@ -101,6 +112,12 @@ class Battlefield(RectObject):
 
     def get_bullets(self):
         return self.bullets
+
+    def remove_object(self,rectObject:RectObject):
+        print('bullets:',len(self.bullets))
+        if rectObject in self.bullets:
+            self.bullets.remove(rectObject)
+            print('bullets:', len(self.bullets))
 
     def get_random_position(self, _object):
         """

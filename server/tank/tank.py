@@ -12,7 +12,7 @@ class Tank(RectObject):
     def __init__(self, name: str):
         super().__init__(width=20, height=20, x=0, y=0)
         self.name = name
-        self.type = 'Tank'
+        self.type = 'tank'
         self.life = 100
         self.oil = 100
         self.weapon1 = 500
@@ -20,7 +20,7 @@ class Tank(RectObject):
         self.status = self.STATUS_READY
         self.socket_addr = None
         # 坦克所在战场
-        self.battlefield = None
+        # self.battlefield = None
 
     def is_bullet_empty(self, weapon: 'weapon type'):
         """
@@ -58,11 +58,6 @@ class Tank(RectObject):
 
     def get_oil(self):
         return self.oil
-
-    def get_center(self):
-        x = self.x + self.width // 2
-        y = self.y + self.height // 2
-        return x, y
 
     def fire(self, weapon: 'weapon type'):
         if not self.is_bullet_empty(weapon):

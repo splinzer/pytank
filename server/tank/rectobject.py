@@ -32,10 +32,10 @@ class RectObject():
         :param x: x坐标（以右上角为原点，向左为x轴）
         :param y: y坐标（以右上角为原点，向下为y轴）
         """
-        self.name = 'RectObject'
+        self.name = 'rectobject'
         self.width = width
         self.height = height
-        self.weapon_type = 'RectObject'
+        # self.weapon_type = 'RectObject'
         # 以左上角为坐标基准点
         self.x = x
         self.y = y
@@ -43,6 +43,8 @@ class RectObject():
         self.direction = self.DIRECTION_UP
         # 默认速度最大
         self.velocity = self.MAX_VELOCITY
+        # 自毁延时,状态变为STATUS_DEAD后多久删除自己，这里的值不是一个时间，而是update的次数
+        self.countdown = 10
 
     def get_velocity(self):
         return self.velocity
@@ -75,6 +77,11 @@ class RectObject():
         :return: 坐标(x,y)
         """
         return self.x, self.y
+
+    def get_center(self):
+        x = self.x + self.width // 2
+        y = self.y + self.height // 2
+        return x, y
 
     def isCollide(self, obj, other_obj):
         """
@@ -117,7 +124,7 @@ class RectObject():
             x -= velocity
         elif direction == self.DIRECTION_RIGHT:
             x += velocity
-        print(self.name, x, y)
+        # print(self.name, x, y)
         self.set_position(x, y)
 
     def get_status(self):
@@ -131,8 +138,27 @@ class RectObject():
 
     def ready(self):
         self.set_status(self.STATUS_READY)
+    # 自杀函数，callback是回调函数，用于销毁rectobject对象
+    def die(self, callback):
+        self.die_callback = callback
+        self.set_status(self.STATUS_DEAD)
+
+    # 自毁函数，只有当self.countdown为零时触发.会自动调用，不要手动调用
+    def __destroy(self):
+        self.die_callback(self)
+        del self
+
+    def __del__(self):
+        pass
 
     def update(self):
+        # 自毁倒计时计数
+        if self.status == self.STATUS_DEAD:
+            if self.countdown <= 0:
+                self.__destroy()
+                return
+            self.countdown -= 1
+
         # print('status:{},STATUS_MOVING:{}'.format(self.status,STATUS_MOVING))
         if self.status == self.STATUS_MOVING:
             self.move_step(self.direction, self.velocity)

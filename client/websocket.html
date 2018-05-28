@@ -6,6 +6,17 @@
 <script src="static/js/fabric.js"></script>
 <script language="javascript" type="text/javascript">
 
+    var STATUS_READY = 0
+    var STATUS_DEAD = 1
+    var STATUS_STOP = 2
+    var STATUS_MOVING = 3
+
+    var MAX_VELOCITY = 5
+
+    var DIRECTION_UP = 0
+    var DIRECTION_DOWN = 1
+    var DIRECTION_LEFT = 2
+    var DIRECTION_RIGHT = 3
 
     function init() {
         document.myform.disconnectButton.disabled = true;
@@ -47,7 +58,7 @@
         writeToScreen("response: " + evt.data + '\n');
         var data = decoder(evt.data)
         //更新战场坦克
-        updateTanks(data)
+        updateBattle(data)
     }
 
     function onError(evt) {
@@ -91,33 +102,42 @@
         // create a wrapper around native canvas element (with id="c")
         var canvas = new fabric.Canvas('c');
         window.battleField = canvas
-        window.tanks = []
+        window.rectObjects = []
     }
 
-    // 检测坦克是否已经存在于战场中
-    function exists(tank) {
-        if (window.tanks.length) {
-            for (i in window.tanks) {
-                if (window.tanks[i].name == tank.name) {
-                    return true
+    // 检测坦克是否已经存在于战场中,存在则返回该对象，否则返回false
+    function exists(rectObject) {
+        // var exclude = ['barrier'];
+        if (window.rectObjects.length) {
+            for (i in window.rectObjects) {
+                if (window.rectObjects[i].ro_name == rectObject.name) {
+                    // return true;
+                    console.log('要删除的对象',window.rectObjects[i])
+                    return window.rectObjects[i];
                 }
             }
         }
         return false
+
     }
 
-    function updateTanks(tanks) {
-        for (n in tanks) {
-            tank = tanks[n]
-            console.log(tank.name, tank.x, tank.y)
-            var left = Number(tank.x)
-            var top = Number(tank.y)
-            var width = Number(tank.width)
-            var height = Number(tank.height)
-
-            if (exists(tank)) {
-                console.log('移动')
-                window.tanks[i].set({'left': left, 'top': top});
+    function updateBattle(dataList) {
+        for (n in dataList) {
+            var rectObject = dataList[n]
+            console.log(rectObject.name, rectObject.x, rectObject.y)
+            var left = Number(rectObject.x)
+            var top = Number(rectObject.y)
+            var width = Number(rectObject.width)
+            var height = Number(rectObject.height)
+            target_obj = exists(rectObject)
+            if (target_obj) {
+                console.log('更新')
+                // 判断目标是否已经死亡
+                if(rectObject.status == STATUS_DEAD){
+                    window.battleField.remove(target_obj)
+                    window.battleField.requestRenderAll()
+                }
+                window.rectObjects[i].set({'left': left, 'top': top});
                 // window.battleField.renderAll()
                 window.battleField.requestRenderAll()
             }
@@ -130,9 +150,10 @@
                     width: width,
                     height: height
                 });
-                rect.name = tank.name
+                rect.ro_name = rectObject.name
+                rect.ro_type = rectObject.type
                 window.battleField.add(rect);
-                window.tanks.push(rect)
+                window.rectObjects.push(rect)
             }
 
         }
