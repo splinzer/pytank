@@ -44,7 +44,7 @@ class RectObject():
         # 默认速度最大
         self.velocity = self.MAX_VELOCITY
         # 自毁延时,状态变为STATUS_DEAD后多久删除自己，这里的值不是一个时间，而是update的次数
-        self.countdown = 10
+        self.countdown = 1
 
     def get_velocity(self):
         return self.velocity

@@ -45,7 +45,7 @@ def start_websocket_server(queue: Queue):
 
 def open_websocket_client(url):
     print('打开本地浏览器')
-    os.system('chromium-browser ' + os.getcwd() + url + '&')
+    os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
 
 
 def main():

@@ -18,7 +18,9 @@ from server.tank.battlefield import Battlefield
 class InfoCoder():
     # 将需要过滤掉的属性名放入FILTER
     FILTER = ['socket_addr',
-              'battlefield']
+              'battlefield',
+              'die_callback',
+              'countdown']
 
     def encoder(self, bt: Battlefield):
         ls = ''
