@@ -6,8 +6,8 @@ class Tank(RectObject):
     """
     坦克类
     """
-    WEAPON_1 = 0
-    WEAPON_2 = 1
+    WEAPON_1 = 1
+    WEAPON_2 = 2
 
     def __init__(self, name: str):
         super().__init__(width=20, height=20, x=0, y=0)
