@@ -10,7 +10,7 @@ from time import sleep
 
 
 class SimpleBroadServer(WebSocket):
-
+    print('websocket伺服启动')
     def handleMessage(self):
         pass
 

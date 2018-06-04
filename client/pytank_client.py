@@ -7,6 +7,7 @@ from time import sleep
 from multiprocessing import Process, Pipe
 from importlib import import_module
 from pathlib import Path
+from client.clientcoder import Coder
 
 # 战场更新频率
 FRAMERATE = 0.1
@@ -39,7 +40,7 @@ class Client:
             self.check_tankAIs(tank_count)
             # 告知服务器创建tankcount个坦克的战场
             username, password = self.getverifyinfo()
-            msg = username + '|' + password + '|' + str(tank_count)
+            msg = 'LOGIN' + username + '|' + password + '|' + str(tank_count)
             self.s.send(msg.encode())
             # 服务器响应 ok|tank1|tank2|tank3|...
             response = self.s.recv(1024).decode()
@@ -50,25 +51,27 @@ class Client:
             else:
                 continue
         # 主循环
-        while True:
-            info = self.getbattleinfo()
-            for pipe in self.pipes:
-                pipe.send(info)
 
+        while True:
+            # 接收服务端战场信息
+            data = self.s.recv(1024)
+            data = data.decode()
+            # 将信息转发给各坦克
+            for pipe in self.pipes:
+                # 反序列化info
+                pipe.send(self.decodeinfo(data))
+            # 获取各坦克的指令发给服务器
             for pipe in self.pipes:
                 bt = pipe.recv()
                 self.send_to_server(bt)
 
     def send_to_server(self, bt):
-        info = self.encodeinfo(bt)
-        self.s.send(info)
-
-    def getbattleinfo(self):
-        battleinfo = self.s.recv(1024)
-        return self.decodeinfo(battleinfo)
+        info = bt
+        print('客户端指令>>', info)
+        self.s.send(str(info).encode())
 
     def check_tankAIs(self, tank_count):
-        if ALLOW_COUNT[0] < tank_count > ALLOW_COUNT[1]:
+        if ALLOW_COUNT[0] > tank_count > ALLOW_COUNT[1]:
             sys.exit(f'坦克AI数量必须在{ALLOW_COUNT}个内')
 
     def init_tanks(self, name_list: list):
@@ -76,7 +79,8 @@ class Client:
         for m in self.tankAIs:
             parent_conn, child_conn = Pipe()
             self.pipes.append(parent_conn)
-            p = Process(target=m.TankAI, args=(child_conn, name_list[n]))
+
+            p = Process(target=m.AI, args=(child_conn, name_list[n]))
             p.start()
             n += 1
 
@@ -85,11 +89,8 @@ class Client:
         password = input('请输入密码：')
         return username, password
 
-    def decodeinfo(self, info):
-        return info
-
-    def encodeinfo(self, info):
-        return info
+    def decodeinfo(self, s: str):
+        return Coder.getBattleClass(s)
 
     def import_tankAIs(self):
         # ./tank目录专用于存放坦克AI程序，从该目录导入坦克AI程序
@@ -102,9 +103,8 @@ class Client:
             name = Path(fullname).stem
             m = import_module(f'tank.{name}')
             # 排除其他非坦克AI的.py文件
-            if 'TankAI' in dir(m):
+            if 'AI' in dir(m):
                 modules.append(m)
-
         return len(modules), modules
 
 

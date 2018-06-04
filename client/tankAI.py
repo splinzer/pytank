@@ -4,8 +4,10 @@ author : Guoxi
 email  : splinzer@gmail.com
 time   : 2018 下午3:37
 '''
-from multiprocessing import Connection
 
+
+# from multiprocessing import Connection
+from time import sleep
 
 class TankAI():
     """
@@ -35,15 +37,29 @@ class TankAI():
     DIRECTION_LEFT = 3
     DIRECTION_RIGHT = 4
 
-    def __init__(self, pipe: Connection, id):
+    def __init__(self, pipe, id):
         self.id = id
         self.pipe = pipe
         self.start()
-        self.actionlist = []
+        self.action = {}
 
         while True:
+            print('阻塞')
             battleinfo = self.pipe.recv()
+            print('tankAI收到',battleinfo)
+            # 找到哪个坦克是自己的坦克
+            self.find_myself(battleinfo)
             self.on_update(battleinfo)
+
+            sleep(0.1)
+            print('tank AI action', self.action)
+
+    def find_myself(self, battleinfo):
+        tanks = battleinfo.tanks
+        for tank in tanks:
+            if self.id == tank.name:
+                self.mytank = tank
+                break
 
     def start(self):
         pass
@@ -66,4 +82,4 @@ class TankAI():
         self.add_action('status', direction)
 
     def add_action(self, type, value):
-        self.actionlist.append(type + ':' + str(value))
+        self.action.update({type: value})
