@@ -9,9 +9,9 @@ class Tank(RectObject):
     WEAPON_1 = 1
     WEAPON_2 = 2
 
-    def __init__(self, name: str):
+    def __init__(self, id):
         super().__init__(width=20, height=20, x=0, y=0)
-        self.name = name
+        self.id = id
         self.type = 'tank'
         self.life = 100
         self.oil = 100
@@ -61,7 +61,7 @@ class Tank(RectObject):
 
     def fire(self, weapon: 'weapon type'):
         if not self.is_bullet_empty(weapon):
-            bullet = Bullet(owner=self.name)
+            bullet = Bullet(owner=self.id)
             bullet.set_position(*self.get_center())
             bullet.set_type(weapon)
             bullet.set_direction(self.direction)

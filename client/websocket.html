@@ -110,7 +110,7 @@
         // var exclude = ['barrier'];
         if (window.rectObjects.length) {
             for (i in window.rectObjects) {
-                if (window.rectObjects[i].ro_name == rectObject.name) {
+                if (window.rectObjects[i].ro_id == rectObject.id) {
                     // return true;
                     console.log('要删除的对象',window.rectObjects[i])
                     return window.rectObjects[i];
@@ -150,7 +150,7 @@
                     width: width,
                     height: height
                 });
-                rect.ro_name = rectObject.name
+                rect.ro_id = rectObject.id
                 rect.ro_type = rectObject.type
                 window.battleField.add(rect);
                 window.rectObjects.push(rect)
@@ -162,8 +162,8 @@
 
     /*websocket消息解码器
     raw消息如下：
-    name:t1|width:20|height:20|x:95|y:50|direction:3|velocity:5|life:100|oil:100|weapon:0|status:3;
-    name:t2|width:20|height:20|x:255|y:50|direction:2|velocity:5|life:100|oil:100|weapon:0|status:3
+    id:t1|width:20|height:20|x:95|y:50|direction:3|velocity:5|life:100|oil:100|weapon:0|status:3;
+    id:t2|width:20|height:20|x:255|y:50|direction:2|velocity:5|life:100|oil:100|weapon:0|status:3
      */
     function decoder(str) {
         var target = []

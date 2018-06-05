@@ -8,9 +8,12 @@ from server.tank.infocoder import InfoCoder
 from threading import Thread
 from time import sleep
 
+HOST = ''
+PORT = 8000
 
 class SimpleBroadServer(WebSocket):
-    print('websocket伺服启动')
+
+
     def handleMessage(self):
         pass
 
@@ -27,7 +30,7 @@ class SimpleBroadServer(WebSocket):
         self.th.join()
 
     def broadCast(self):
-        print('开始接收广播')
+        print(f'[server]启动<websocket伺服>在<({HOST},{PORT})>')
         while True:
             data = self.queue.get()
             coder = InfoCoder()
@@ -37,5 +40,5 @@ class SimpleBroadServer(WebSocket):
 
 
 if __name__ == "__main__":
-    server = SimpleWebSocketServer('', 8000, SimpleBroadServer)
+    server = SimpleWebSocketServer(HOST, PORT, SimpleBroadServer)
     server.serveforever()

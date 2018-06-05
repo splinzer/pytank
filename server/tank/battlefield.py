@@ -3,10 +3,8 @@
 # @email  : splinzer@gmail.com
 # @time   : 2018 下午5:52
 from server.tank.barrier import Barrier
-from server.tank.rectobject import RectObject
-from server.tank.tank import Tank
 from server.tank.tank import *
-
+import json
 
 class Battlefield(RectObject):
     """
@@ -57,7 +55,7 @@ class Battlefield(RectObject):
 
             # 坦克达到战场边界停止移动
             if self.is_on_edge(_tank):
-                print('tank:{}抵达边界停止'.format(_tank))
+                print('[服务端]提示<{}>抵达边界停止'.format(_tank))
                 _tank.stop()
 
             # 先将状态重置为正常，而后根据碰撞检测再修改设置
@@ -76,7 +74,7 @@ class Battlefield(RectObject):
         # 当子弹到达战场边界自毁
         for _bullet in self.bullets:
             if self.is_on_edge(_bullet):
-                print('子弹：{}抵达边界销毁'.format(_bullet))
+                print('[服务端]提示<{}>抵达边界销毁'.format(_bullet))
                 # self.bullets.remove(_bullet)
                 _bullet.die(self.remove_object)
 
@@ -114,10 +112,10 @@ class Battlefield(RectObject):
         return self.bullets
 
     def remove_object(self, rectObject: RectObject):
-        print('bullets:', len(self.bullets))
+
         if rectObject in self.bullets:
             self.bullets.remove(rectObject)
-            print('bullets:', len(self.bullets))
+
 
     def get_random_position(self, _object):
         """
@@ -160,9 +158,11 @@ class Battlefield(RectObject):
         :return:
         """
         # 先根据客户端传回的指令更新战场
+        # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
         if str:
-            print('战场收到客户端指令', str)
+
             # TODO 指令解码并据此更新战场
+            battle = json.loads(str)
 
             pass
         self.update_tanks()

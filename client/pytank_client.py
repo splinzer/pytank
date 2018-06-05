@@ -10,7 +10,6 @@ from pathlib import Path
 from client.clientcoder import Coder
 import json
 
-
 # 战场更新频率
 FRAMERATE = 0.1
 # webscoket服务器host
@@ -27,8 +26,13 @@ ALLOW_COUNT = (2, 5)
 
 class Client:
     def __init__(self):
-        # self.pipes = []
+        # 战场id
+        self.battle_id = None
+        # 坦克id列表
+        self.tank_id_list = []
+        # 战场上所有坦克AI的输入数据队列
         self.in_queues = []
+        # 战场上所有坦克AI的输出数据队列
         self.out_queues = []
         self.s = None
         self.connect()
@@ -46,11 +50,17 @@ class Client:
             username, password = self.getverifyinfo()
             msg = 'LOGIN' + username + '|' + password + '|' + str(tank_count)
             self.s.send(msg.encode())
-            # 服务器响应 ok|tank1|tank2|tank3|...
+            # 服务器响应
             response = self.s.recv(1024).decode()
+            # 响应内容格式：'ok|battle_id|tank_id1|tank_id2|...'
+            print('[client]收到<登录响应>：', response)
             response = response.split('|')
             if response[0] == 'ok':
-                self.init_tanks(response[1:])
+
+                self.battle_id = response[1]
+                self.tank_id_list = response[2:]
+                # 初始化坦克AI进程
+                self.init_tanks_process()
                 break
             else:
                 continue
@@ -59,7 +69,7 @@ class Client:
         while True:
             # 接收服务端战场信息
             data = self.s.recv(1024)
-            print('来自服务器的战场数据>>', data)
+            print('[client]收到<战场数据>:', data)
             # 判断游戏结束
             if data == 'over':
                 # todo 显示游戏结果
@@ -75,30 +85,36 @@ class Client:
                 if not out_queue.empty():
                     bt = out_queue.get()
                     # todo 发送前需添加tank和战场签名
+
                     self.send_to_server(bt)
                 else:
-                    print('客户端无指令发出')
+                    print('[client]暂无<指令>')
         os.wait()
 
     def send_to_server(self, bt):
         info = json.dumps(bt)
-        print('客户端指令>>', info)
+        print('[client]发出<指令>:', info)
         self.s.send(info.encode())
 
     def check_tankAIs(self, tank_count):
         if ALLOW_COUNT[0] > tank_count > ALLOW_COUNT[1]:
-            sys.exit(f'坦克AI数量必须在{ALLOW_COUNT}个内')
+            sys.exit(f'[client]警告<坦克AI数量必须在{ALLOW_COUNT}个内>')
 
-    def init_tanks(self, name_list: list):
+    def init_tanks_process(self):
+        """
+        为每个坦克AI创建一个独立进程，每个进程拥有分别拥有输入数据和输出数据队列用来和主进程通讯
+        :return:
+        """
         n = 0
         for m in self.tankAIs:
-
+            # 坦克控制逻辑的输入数据队列
             in_queue = Queue()
             self.in_queues.append(in_queue)
+            # 坦克控制逻辑的输出数据队列
             out_queue = Queue()
             self.out_queues.append(out_queue)
-
-            p = Process(target=m.AI, args=(in_queue, out_queue, name_list[n]))
+            # 每个坦克控制逻辑对应一个进程
+            p = Process(target=m.AI, args=(in_queue, out_queue, self.battle_id, self.tank_id_list[n]))
             p.start()
             n += 1
 
@@ -107,7 +123,7 @@ class Client:
         # username = input('请输入用户名：')
         # password = input('请输入密码：')
         # return username, password
-        return 'name','pass'
+        return 'name', 'pass'
 
     def decodeinfo(self, s: str):
         return Coder.getBattleClass(s)

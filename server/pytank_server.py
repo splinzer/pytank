@@ -38,7 +38,7 @@ def start_websocket_server(queue: Queue):
 def open_websocket_client(url):
     path = os.getcwd() + url
     subprocess.Popen(['chromium-browser', path])
-    print('打开本地浏览器')
+    print('[server]打开<本地浏览器>')
     # os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
 
 
@@ -78,7 +78,7 @@ def main():
         # 验证用户密码密码
         data, addr = s.recvfrom(1024)
         data = data.decode()
-        print('------------------------------------------------------------------')
+
         if data == '':
             continue
         elif data[0:5] == 'LOGIN':
@@ -86,14 +86,14 @@ def main():
             # 客户端身份验证（无数据或客户端用户名密码验证失败）
             if verify_user(username, password):
                 # 按照客户端需要创建拥有指定坦克数量的战斗
-                bt, tank_names = createBattle(int(count))
+                bt, tank_id_list = createBattle(int(count))
                 # 客户端地址和坦克名对应关系列表，数据如下样例：
                 # [('127.0.0.1',4957):['tank1','tank2'],
                 #  ('127.0.0.1',4958):['tank1','tank2','tank2'],
                 #  ('127.0.0.1',4959):['tank1','tank2','tank2']]
-                client_addrs_list.update({addr: tank_names})
+                client_addrs_list.update({addr: tank_id_list})
                 # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的name列表）
-                msg = 'ok|' + '|'.join(tank_names)
+                msg = 'ok|' + bt.id + '|' + '|'.join(tank_id_list)
                 s.sendto(msg.encode(), addr)
 
                 # 开启服务主循环
@@ -101,7 +101,7 @@ def main():
                 main_p.start()
         else:
             # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
-            print('客户端指令>>{}来自{}'.format(data, addr))
+            print('[server]收到<客户端指令>来自<{}>:{}'.format(addr, data))
             in_queue.put(data)
             sleep(FRAMERATE)
 
@@ -109,9 +109,9 @@ def main():
 
 
 def mainloop(bt: Battlefield, in_queues_list, out_queues_list):
-    print('服务主循环开启')
+    print('[server]启动<主进程循环>')
     while True:
-        print('服务器主循环')
+
         # 更新战场信息
         for q in in_queues_list:
             if not q.empty():
@@ -125,7 +125,7 @@ def mainloop(bt: Battlefield, in_queues_list, out_queues_list):
 
 
 def sendinfo_to_client(s: socket, queue: Queue, shared_memory):
-    print('战场情报下发伺服进程启动')
+    print('[server]启动<战场数据伺服进程>')
     while True:
         if not queue.empty():
             data = queue.get()
@@ -133,7 +133,7 @@ def sendinfo_to_client(s: socket, queue: Queue, shared_memory):
             data = coder.encoder(data)
             for addr in shared_memory.keys():
                 s.sendto(data.encode(), addr)
-                print('战场情报下发>>{}    给{}'.format(data, addr))
+                print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
         sleep(FRAMERATE)
 
 
@@ -163,11 +163,11 @@ def createBattle(tank_count: int):
     # todo 实现随机生成障碍物
     # bt.add_barrier(Barrier(20, 10, 100, 100))
     # bt.add_barrier(Barrier(10, 15, 300, 500))
-    tank_names = []
+    tank_id_list = []
 
     for i in range(1, tank_count + 1):
         tank_id = 't' + seed + str(i)
-        tank_names.append(tank_id)
+        tank_id_list.append(tank_id)
         tank = Tank(tank_id)
         # 设置坦克所属战场
         tank.battlefield_id = bt.id
@@ -175,7 +175,7 @@ def createBattle(tank_count: int):
         tank.set_status(Tank.STATUS_STOP)
         tank.set_direction(Tank.DIRECTION_RIGHT)
         bt.add_tank(tank)
-    return bt, tank_names
+    return bt, tank_id_list
 
 
 def verify_user(username, password):

@@ -32,7 +32,8 @@ class RectObject():
         :param x: x坐标（以右上角为原点，向左为x轴）
         :param y: y坐标（以右上角为原点，向下为y轴）
         """
-        self.name = 'rectobject'
+        self.id = 'rectobject'
+        self.id = None
         self.width = width
         self.height = height
         # self.weapon_type = 'RectObject'
@@ -59,7 +60,7 @@ class RectObject():
         self.direction = direction
 
     def get_name(self):
-        return self.name
+        return self.id
 
     def set_position(self, x: int, y: int):
         """

@@ -68,20 +68,22 @@ class TankAI():
     # 战场更新频率
     FRAMERATE = 0.1
 
-    def __init__(self, in_queue, out_queue, id):
-        self.id = id
+    def __init__(self, in_queue, out_queue, battle_id, tank_id):
+        self.battle_id = battle_id
+        self.id = tank_id
         self.in_queue = in_queue
         self.out_queue = out_queue
         # action用于保存每次update坦克控制程序产生的指令
-        # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
-        self.action = {}
+        # 指令示例：{'tank_id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
+        self.action = {'tank_id': self.id,
+                       'battle_id': self.battle_id}
 
         self.on_start()
         while True:
-            print('阻塞')
+
             if not self.in_queue.empty():
                 battleinfo = self.in_queue.get()
-                print('tankAI收到', battleinfo)
+                print('[tankAI]收到<战场数据>:', battleinfo)
                 # 找到哪个坦克是自己的坦克
                 self.find_myself(battleinfo)
                 # 执行坦克控制程序逻辑
@@ -91,7 +93,6 @@ class TankAI():
             # 将本次update产生的指令放入输出队列
             self.out_queue.put(self.action)
             sleep(TankAI.FRAMERATE)
-            print('tank AI action', self.action)
 
     def find_myself(self, battleinfo):
         """
@@ -101,7 +102,7 @@ class TankAI():
         """
         tanks = battleinfo.tanks
         for tank in tanks:
-            if self.id == tank.name:
+            if self.id == tank.id:
                 self.mytank = tank
                 break
 
