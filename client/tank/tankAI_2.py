@@ -27,7 +27,7 @@ class AI(TankAI):
             # 如探测到敌方坦克进入攻击范围，发起攻击
             direction = self.is_nearby(tank)
             if direction and tank == self.mytank:
-                self.fire(direction, weapon=self.WEAPON_1)
+                self.fire(weapon=self.WEAPON_1)
 
         for barrier in barriers:
             # 蔽开障碍物

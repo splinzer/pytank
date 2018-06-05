@@ -113,8 +113,8 @@ class Battlefield(RectObject):
     def get_bullets(self):
         return self.bullets
 
-    def remove_object(self,rectObject:RectObject):
-        print('bullets:',len(self.bullets))
+    def remove_object(self, rectObject: RectObject):
+        print('bullets:', len(self.bullets))
         if rectObject in self.bullets:
             self.bullets.remove(rectObject)
             print('bullets:', len(self.bullets))
@@ -153,7 +153,18 @@ class Battlefield(RectObject):
             _bullet.update()
 
     # 计算并刷新数据
-    def update(self):
+    def update(self, str=None):
+        """
+        根据客户端传回的指令更新战场
+        :param str:客户端指令
+        :return:
+        """
+        # 先根据客户端传回的指令更新战场
+        if str:
+            print('战场收到客户端指令', str)
+            # TODO 指令解码并据此更新战场
+
+            pass
         self.update_tanks()
         self.update_bullets()
         self.collision_stat_update()

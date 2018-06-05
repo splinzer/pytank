@@ -20,7 +20,7 @@ class Tank(RectObject):
         self.status = self.STATUS_READY
         self.socket_addr = None
         # 坦克所在战场
-        # self.battlefield = None
+        self.battlefield = None
 
     def is_bullet_empty(self, weapon: 'weapon type'):
         """

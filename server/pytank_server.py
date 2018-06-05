@@ -7,7 +7,7 @@ from server.tank.battlefield import *
 from server.tank.barrier import Barrier
 from server.websocket_server import SimpleBroadServer, SimpleWebSocketServer
 from multiprocessing import Queue, Process, Manager
-from time import sleep, ctime
+from time import sleep, time
 import os
 import subprocess
 from select import *
@@ -66,16 +66,19 @@ def main():
     # 客户端地址和坦克名对应关系列表
     shared_memory = Manager()
     client_addrs_list = shared_memory.dict()
-
+    # 战场情报输出队列
+    out_queue = Queue()
+    # 客户端指令输入队列
+    in_queue = Queue()
     # 启动战场情报下发伺服进程
-    send_queue = Queue()
-    send_p = Process(target=sendinfo_to_client, args=(s, send_queue, client_addrs_list))
+    send_p = Process(target=sendinfo_to_client, args=(s, out_queue, client_addrs_list))
     send_p.start()
-
+    # todo 实现多个战斗同时进行
     while True:
         # 验证用户密码密码
         data, addr = s.recvfrom(1024)
         data = data.decode()
+        print('------------------------------------------------------------------')
         if data == '':
             continue
         elif data[0:5] == 'LOGIN':
@@ -94,25 +97,28 @@ def main():
                 s.sendto(msg.encode(), addr)
 
                 # 开启服务主循环
-                main_p = Process(target=mainloop, args=(bt, [websk_queue, send_queue]))
+                main_p = Process(target=mainloop, args=(bt, [in_queue], [websk_queue, out_queue]))
                 main_p.start()
         else:
-            print('')
+            # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
             print('客户端指令>>{}来自{}'.format(data, addr))
-            # queue.put(data)
-            # sleep(FRAMERATE)
-
+            in_queue.put(data)
+            sleep(FRAMERATE)
 
     os.wait()
 
 
-def mainloop(bt: Battlefield, queue_list):
+def mainloop(bt: Battlefield, in_queues_list, out_queues_list):
     print('服务主循环开启')
     while True:
+        print('服务器主循环')
         # 更新战场信息
-        bt.update()
+        for q in in_queues_list:
+            if not q.empty():
+                bt.update(q.get())
+
         # 将战场信息放入消息队列
-        for q in queue_list:
+        for q in out_queues_list:
             q.put(bt)
         # 信息下发频率控制
         sleep(FRAMERATE)
@@ -121,12 +127,13 @@ def mainloop(bt: Battlefield, queue_list):
 def sendinfo_to_client(s: socket, queue: Queue, shared_memory):
     print('战场情报下发伺服进程启动')
     while True:
-        data = queue.get()
-        coder = InfoCoder()
-        data = coder.encoder(data)
-        for addr in shared_memory.keys():
-            s.sendto(data.encode(), addr)
-            print('战场情报下发伺服进程>>下发{}给{}'.format(data, addr))
+        if not queue.empty():
+            data = queue.get()
+            coder = InfoCoder()
+            data = coder.encoder(data)
+            for addr in shared_memory.keys():
+                s.sendto(data.encode(), addr)
+                print('战场情报下发>>{}    给{}'.format(data, addr))
         sleep(FRAMERATE)
 
 
@@ -147,16 +154,23 @@ def createBattle(tank_count: int):
     :return: 元组，(战场对象，坦克name列表)
     """
     size = (600, 400)
+    # 生成随机种子
+    seed = '{}'.format(round(time()))
 
     bt = Battlefield(*size)
+    # 生成战场唯一标识
+    bt.id = 'b' + seed
+    # todo 实现随机生成障碍物
     # bt.add_barrier(Barrier(20, 10, 100, 100))
     # bt.add_barrier(Barrier(10, 15, 300, 500))
     tank_names = []
 
     for i in range(1, tank_count + 1):
-        tank_name = 't' + str(i)
-        tank_names.append(tank_name)
-        tank = Tank(tank_name)
+        tank_id = 't' + seed + str(i)
+        tank_names.append(tank_id)
+        tank = Tank(tank_id)
+        # 设置坦克所属战场
+        tank.battlefield_id = bt.id
         tank.set_position(*get_random_position(size))
         tank.set_status(Tank.STATUS_STOP)
         tank.set_direction(Tank.DIRECTION_RIGHT)
