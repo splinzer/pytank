@@ -151,18 +151,18 @@ class Battlefield(RectObject):
             _bullet.update()
 
     # 计算并刷新数据
-    def update(self, str=None):
+    def update(self, tankinfo):
         """
         根据客户端传回的指令更新战场
-        :param str:客户端指令
+        :param tankinfo:坦克信息对象，如：{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}
         :return:
         """
         # 先根据客户端传回的指令更新战场
-        # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
-        if str:
+
+        if tankinfo:
 
             # TODO 指令解码并据此更新战场
-            battle = json.loads(str)
+
 
             pass
         self.update_tanks()

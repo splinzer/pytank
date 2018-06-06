@@ -56,13 +56,14 @@ class Client:
             print('[client]收到<登录响应>：', response)
             response = response.split('|')
             if response[0] == 'ok':
-
+                print('[client]登录成功')
                 self.battle_id = response[1]
                 self.tank_id_list = response[2:]
                 # 初始化坦克AI进程
                 self.init_tanks_process()
                 break
             else:
+                print('[client]登录失败')
                 continue
         # 主循环
 
@@ -80,12 +81,12 @@ class Client:
             for in_queue in self.in_queues:
                 # 反序列化info
                 in_queue.put(self.decodeinfo(data))
+            # todo 在同一进程中收到战场数据而后立即发出指令会导致发出空的指令
+            # 如：{"tank_id": "t15282509112", "battle_id": "b1528250911", "name": "t15282509112"}
             # 获取各坦克的指令发给服务器
             for out_queue in self.out_queues:
                 if not out_queue.empty():
                     bt = out_queue.get()
-                    # todo 发送前需添加tank和战场签名
-
                     self.send_to_server(bt)
                 else:
                     print('[client]暂无<指令>')
@@ -105,8 +106,10 @@ class Client:
         为每个坦克AI创建一个独立进程，每个进程拥有分别拥有输入数据和输出数据队列用来和主进程通讯
         :return:
         """
+        print(f'[client]初始化<坦克AI进程>')
         n = 0
         for m in self.tankAIs:
+            # todo 这里为每个tankAI使用了单独的in_queue和out_queue，可以考虑合并
             # 坦克控制逻辑的输入数据队列
             in_queue = Queue()
             self.in_queues.append(in_queue)
@@ -119,7 +122,7 @@ class Client:
             n += 1
 
     def getverifyinfo(self):
-        # todo 调试完成后需要修改登录逻辑
+        # todo 为方便调试暂时屏蔽登录逻辑，调试完成后需要修改
         # username = input('请输入用户名：')
         # password = input('请输入密码：')
         # return username, password

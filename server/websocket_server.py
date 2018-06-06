@@ -21,7 +21,7 @@ class SimpleBroadServer(WebSocket):
     # self.sendMessage(self.data)
 
     def handleConnected(self):
-        print(self.address, 'connected')
+        print(f'[websocket]已连接<{self.address}>')
         self.th = Thread(target=self.broadCast)
         self.th.start()
 
@@ -30,7 +30,7 @@ class SimpleBroadServer(WebSocket):
         self.th.join()
 
     def broadCast(self):
-        print(f'[server]启动<websocket伺服>在<({HOST},{PORT})>')
+        print(f'[websocket]启动<({HOST},{PORT})>')
         while True:
             data = self.queue.get()
             coder = InfoCoder()

@@ -69,12 +69,14 @@ class TankAI():
     FRAMERATE = 0.1
 
     def __init__(self, in_queue, out_queue, battle_id, tank_id):
+        print('[tankAI]启动')
         self.battle_id = battle_id
         self.id = tank_id
         self.in_queue = in_queue
         self.out_queue = out_queue
         # action用于保存每次update坦克控制程序产生的指令
         # 指令示例：{'tank_id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
+        # 这里通过tank_id和battle_id为action签名，以便在服务端识别
         self.action = {'tank_id': self.id,
                        'battle_id': self.battle_id}
 
@@ -88,8 +90,7 @@ class TankAI():
                 self.find_myself(battleinfo)
                 # 执行坦克控制程序逻辑
                 self.on_update(battleinfo)
-            # 为action签名
-            self.update_action('name', self.id)
+            # self.update_action('name', self.id)
             # 将本次update产生的指令放入输出队列
             self.out_queue.put(self.action)
             sleep(TankAI.FRAMERATE)
