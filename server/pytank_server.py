@@ -184,11 +184,11 @@ def sendinfo_to_client(s: socket, queue: Queue, client_list_shared):
         sleep(FRAMERATE)
 
 
-def get_random_position(size: tuple):
-    width = size[0]
-    height = size[1]
-    tank_width = 20
-    tank_height = 20
+def get_random_position(battle_size: tuple, tank_size: tuple):
+    width = battle_size[0]
+    height = battle_size[1]
+    tank_width = tank_size[0]
+    tank_height = tank_size[1]
     x = randint(tank_width, width - tank_width)
     y = randint(tank_height, height - tank_height)
     return x, y
@@ -200,11 +200,11 @@ def createBattle(tank_count: int):
     :param tank_count: 坦克数量
     :return: 元组，(战场对象，坦克name列表)
     """
-    size = (600, 400)
+    battle_size = (800, 600)
     # 生成随机种子
     seed = '{}'.format(round(time()))
 
-    bt = Battlefield(*size)
+    bt = Battlefield(*battle_size)
     # 生成战场唯一标识
     bt.id = 'b' + seed
     # todo 实现随机生成障碍物
@@ -218,7 +218,7 @@ def createBattle(tank_count: int):
         tank = Tank(tank_id)
         # 设置坦克所属战场
         tank.battlefield_id = bt.id
-        tank.set_position(*get_random_position(size))
+        tank.set_position(*get_random_position(battle_size, (tank.width, tank.height)))
         tank.set_status(Tank.STATUS_MOVING)
         tank.set_direction(Tank.DIRECTION_RIGHT)
         bt.add_tank(tank)

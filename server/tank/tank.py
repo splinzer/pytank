@@ -10,7 +10,7 @@ class Tank(RectObject):
     WEAPON_2 = 2
 
     def __init__(self, id):
-        super().__init__(width=20, height=20, x=0, y=0)
+        super().__init__(width=64, height=64, x=0, y=0)
         self.id = id
         self.type = 'tank'
         self.life = 100

@@ -6,39 +6,39 @@
 <script src="static/js/fabric.js"></script>
 <script language="javascript" type="text/javascript">
 
-    var STATUS_READY = 1
-    var STATUS_DEAD = 2
-    var STATUS_STOP = 3
-    var STATUS_MOVING = 4
+    var STATUS_READY = 1;
+    var STATUS_DEAD = 2;
+    var STATUS_STOP = 3;
+    var STATUS_MOVING = 4;
 
-    var MAX_VELOCITY = 5
+    var MAX_VELOCITY = 5;
 
-    var DIRECTION_UP = 1
-    var DIRECTION_DOWN = 2
-    var DIRECTION_LEFT = 3
-    var DIRECTION_RIGHT = 4
+    var DIRECTION_UP = 1;
+    var DIRECTION_DOWN = 2;
+    var DIRECTION_LEFT = 3;
+    var DIRECTION_RIGHT = 4;
 
     function init() {
         document.myform.disconnectButton.disabled = true;
         //自动连接websocket服务器
-        doConnect()
+        doConnect();
         //初始化战场
-        init_battlefield()
+        init_battlefield();
     }
 
     function doConnect() {
         websocket = new WebSocket("ws://localhost:8000/");
         websocket.onopen = function (evt) {
-            onOpen(evt)
+            onOpen(evt);
         };
         websocket.onclose = function (evt) {
-            onClose(evt)
+            onClose(evt);
         };
         websocket.onmessage = function (evt) {
-            onMessage(evt)
+            onMessage(evt);
         };
         websocket.onerror = function (evt) {
-            onError(evt)
+            onError(evt);
         };
     }
 
@@ -56,7 +56,7 @@
 
     function onMessage(evt) {
         writeToScreen("response: " + evt.data + '\n');
-        var data = decoder(evt.data)
+        var data = decoder(evt.data);
         //更新战场坦克
         updateBattle(data)
     }
@@ -77,7 +77,7 @@
     // }
 
     function writeToScreen(message) {
-        document.myform.outputtext.value += message
+        document.myform.outputtext.value += message;
         document.myform.outputtext.scrollTop = document.myform.outputtext.scrollHeight;
 
     }
@@ -101,7 +101,7 @@
 
         // create a wrapper around native canvas element (with id="c")
         var canvas = new fabric.Canvas('c');
-        window.battleField = canvas
+        window.battleField = canvas;
         window.rectObjects = []
     }
 
@@ -112,7 +112,7 @@
             for (i in window.rectObjects) {
                 if (window.rectObjects[i].ro_id == rectObject.id) {
                     // return true;
-                    console.log('要删除的对象',window.rectObjects[i])
+                    console.log('要删除的对象',window.rectObjects[i]);
                     return window.rectObjects[i];
                 }
             }
@@ -123,25 +123,52 @@
 
     function updateBattle(dataList) {
         for (n in dataList) {
-            var rectObject = dataList[n]
-            console.log(rectObject.name, rectObject.x, rectObject.y)
-            var left = Number(rectObject.x)
-            var top = Number(rectObject.y)
-            var width = Number(rectObject.width)
-            var height = Number(rectObject.height)
-            target_obj = exists(rectObject)
+            var rectObject = dataList[n];
+            console.log(rectObject.name, rectObject.x, rectObject.y);
+            var left = Number(rectObject.x);
+            var top = Number(rectObject.y);
+            var width = Number(rectObject.width);
+            var height = Number(rectObject.height);
+            var direction = Number(rectObject.direction);
+            var angle = 0;
+            switch (direction){
+                case 1:
+                    angle = -90;
+                    break;
+                case 2:
+                    angle = 90;
+                    break;
+                case 3:
+                    angle = 180;
+                    break;
+            }
+
+            target_obj = exists(rectObject);
             if (target_obj) {
-                console.log('更新')
+                console.log('更新');
                 // 判断目标是否已经死亡
                 if(rectObject.status == STATUS_DEAD){
-                    window.battleField.remove(target_obj)
-                    window.battleField.requestRenderAll()
+                    window.battleField.remove(target_obj);
+                    window.battleField.requestRenderAll();
                 }
-                window.rectObjects[i].set({'left': left, 'top': top});
+                window.rectObjects[i].set({'left': left, 'top': top ,'angle': angle});
                 // window.battleField.renderAll()
                 window.battleField.requestRenderAll()
             }
             else {
+
+                var canvas = new fabric.Canvas('c');
+                var imgElement = document.getElementById('my-image');
+                var imgInstance = new fabric.Image(imgElement, {
+                  left: left,
+                  top: top,
+                  angle: angle,
+                });
+                imgInstance.ro_id = rectObject.id
+                imgInstance.ro_type = rectObject.type
+                window.battleField.add(imgInstance);
+                window.rectObjects.push(imgInstance)
+                /*
                 console.log('添加')
                 var rect = new fabric.Rect({
                     left: left,
@@ -153,7 +180,7 @@
                 rect.ro_id = rectObject.id
                 rect.ro_type = rectObject.type
                 window.battleField.add(rect);
-                window.rectObjects.push(rect)
+                window.rectObjects.push(rect)*/
             }
 
         }
@@ -182,18 +209,18 @@
 
 
 </script>
-<div style="width:600px;height:400px;border:1px solid gray;margin:10px auto">
+<div style="width:800px;height:600px;border:1px solid gray;margin:4px auto">
 
-    <canvas id='c' width="600" height="400"></canvas>
+    <canvas id='c' width="800px" height="600px" ></canvas>
 
 </div>
-<div style="margin:10px auto;width:100%;">
+<div style="margin:4px auto;width:100%;">
 
     <div id="output"></div>
 
     <form name="myform">
         <p>
-            <textarea name="outputtext" style="width:100%;height:300px"></textarea>
+            <textarea name="outputtext" style="width:100%;height:280px;font-size: 10px;"></textarea>
         </p>
         <!--<p>-->
         <!--<textarea name="inputtext" cols="50"></textarea>-->
@@ -211,7 +238,7 @@
 
     </form>
 </div>
+<img src="static/imgs/tank0.png" id="my-image" style="display: none;">
 
-
-</html> 
+</html>
 

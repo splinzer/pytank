@@ -158,7 +158,6 @@ class Battlefield(RectObject):
         :return:
         """
         # 先根据客户端传回的指令更新战场
-        print('[update_before_send被调用]')
         if tankinfo:
 
             # todo 指令解码并据此更新战场

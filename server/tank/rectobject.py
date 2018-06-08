@@ -113,7 +113,6 @@ class RectObject():
         :param velocity:移动速度
         :return:新坐标（Point类型）
         """
-        print('move_step')
         x = self.x
         y = self.y
         if velocity > self.MAX_VELOCITY:
