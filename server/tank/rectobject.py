@@ -113,6 +113,7 @@ class RectObject():
         :param velocity:移动速度
         :return:新坐标（Point类型）
         """
+        print('move_step')
         x = self.x
         y = self.y
         if velocity > self.MAX_VELOCITY:
@@ -162,4 +163,5 @@ class RectObject():
 
         # print('status:{},STATUS_MOVING:{}'.format(self.status,STATUS_MOVING))
         if self.status == self.STATUS_MOVING:
+            print('[rectobject update被调用]')
             self.move_step(self.direction, self.velocity)

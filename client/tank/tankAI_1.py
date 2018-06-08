@@ -53,7 +53,7 @@ class AI(TankAI):
         # print('tankAI_1:', tanks[0])
         # print('tankAI_1:', self.mytank.x)
 
-        self.move(self.DIRECTION_RIGHT, 5)
+        self.move(self.DIRECTION_LEFT, 5)
 
         for tank in tanks:
             # 如探测到敌方坦克进入攻击范围，发起攻击

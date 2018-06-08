@@ -8,6 +8,7 @@ from client.battle import Battle
 
 
 class Coder:
+    # todo 这里的编码和解码方式可以其使用json方式替代
     @classmethod
     def getBattleClass(cls, s):
         """
@@ -24,11 +25,11 @@ class Coder:
         barriers = []
         for i in cls.__transfer(s):
             if i['type'] == 'tank':
-                tanks.append(DtoC(i))
+                tanks.append(dict_to_class(i))
             if i['type'] == 'bullet':
-                bullets.append(DtoC(i))
+                bullets.append(dict_to_class(i))
             if i['type'] == 'barrier':
-                barriers.append(DtoC(i))
+                barriers.append(dict_to_class(i))
         return Battle(tanks, bullets, barriers)
 
     @classmethod
@@ -60,9 +61,9 @@ class Coder:
         return ds
 
 
-class DtoC(object):
+class dict_to_class(object):
     """
-    DtoC用于把一个dict转成class，这样便于采用object.attribute的方式访问
+    用于把一个dict转成class，这样便于采用object.attribute的方式访问
     """
 
     def __init__(self, o: dict):

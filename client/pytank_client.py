@@ -77,25 +77,27 @@ class Client:
                 pass
 
             data = data.decode()
-            # 将信息转发给各坦克
+            # 将信息通过queue转发给各坦克AI和websocket
             for in_queue in self.in_queues:
                 # 反序列化info
                 in_queue.put(self.decodeinfo(data))
-            # todo 在同一进程中收到战场数据而后立即发出指令会导致发出空的指令
-            # 如：{"tank_id": "t15282509112", "battle_id": "b1528250911", "name": "t15282509112"}
+
             # 获取各坦克的指令发给服务器
+            # todo 目前各坦克的指令分别发出，考虑合并更高效
             for out_queue in self.out_queues:
                 if not out_queue.empty():
-                    bt = out_queue.get()
-                    self.send_to_server(bt)
+                    action_str = out_queue.get()
+                    self.send_to_server(action_str)
                 else:
                     print('[client]暂无<指令>')
         os.wait()
 
-    def send_to_server(self, bt):
-        info = json.dumps(bt)
-        print('[client]发出<指令>:', info)
-        self.s.send(info.encode())
+    def send_to_server(self, action_str):
+        # 使用json对指令进行序列化处理
+        action_json = json.dumps(action_str)
+        print('[client]发出<指令>:', action_json)
+        # 发给服务端
+        self.s.send(action_json.encode())
 
     def check_tankAIs(self, tank_count):
         if ALLOW_COUNT[0] > tank_count > ALLOW_COUNT[1]:

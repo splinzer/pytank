@@ -74,25 +74,29 @@ class TankAI():
         self.id = tank_id
         self.in_queue = in_queue
         self.out_queue = out_queue
-        # action用于保存每次update坦克控制程序产生的指令
-        # 指令示例：{'tank_id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
         # 这里通过tank_id和battle_id为action签名，以便在服务端识别
-        self.action = {'tank_id': self.id,
+        action_sign = {'id': self.id,
                        'battle_id': self.battle_id}
+        # action用于保存每次update坦克控制程序产生的指令
+        # 指令示例：{'id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
+        self.action = {}
 
         self.on_start()
         while True:
 
             if not self.in_queue.empty():
                 battleinfo = self.in_queue.get()
-                print('[tankAI]收到<战场数据>:', battleinfo)
                 # 找到哪个坦克是自己的坦克
                 self.find_myself(battleinfo)
                 # 执行坦克控制程序逻辑
                 self.on_update(battleinfo)
             # self.update_action('name', self.id)
-            # 将本次update产生的指令放入输出队列
-            self.out_queue.put(self.action)
+            # 程序运行之初self.action有可能为空
+            if self.action:
+                # 添加签名
+                self.action.update(action_sign)
+                # 将本次update产生的指令放入输出队列
+                self.out_queue.put(self.action)
             sleep(TankAI.FRAMERATE)
 
     def find_myself(self, battleinfo):

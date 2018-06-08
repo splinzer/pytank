@@ -151,20 +151,27 @@ class Battlefield(RectObject):
             _bullet.update()
 
     # 计算并刷新数据
-    def update(self, tankinfo):
+    def update_before_send(self, tankinfo):
         """
         根据客户端传回的指令更新战场
         :param tankinfo:坦克信息对象，如：{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}
         :return:
         """
         # 先根据客户端传回的指令更新战场
-
+        print('[update_before_send被调用]')
         if tankinfo:
 
-            # TODO 指令解码并据此更新战场
+            # todo 指令解码并据此更新战场
+            tank_id = tankinfo['id']
+            # 当前版本每次只能接收一个坦克的更新信息，所有每次只更新一个坦克
+            for tank in self.tanks:
+                if tank.id == tank_id:
+                    tank.set_direction(tankinfo['direction'])
+                    tank.set_status(tankinfo['status'])
+                if tankinfo['fire'] == 'on':
+                    # todo 创建子弹对象
+                    pass
 
-
-            pass
         self.update_tanks()
         self.update_bullets()
         self.collision_stat_update()
