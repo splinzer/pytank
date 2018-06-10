@@ -55,15 +55,16 @@
     }
 
     function onMessage(evt) {
-        writeToScreen("response: " + evt.data + '\n');
+        // writeToScreen(evt.data + '\n');
+        console.log(evt.data);
         var data = decoder(evt.data);
         //更新战场坦克
         updateBattle(data)
     }
 
     function onError(evt) {
-        writeToScreen('error: ' + evt.data + '\n');
-
+        // writeToScreen('error: ' + evt.data + '\n');
+        console.log('error: ' + evt.data )
         websocket.close();
 
         document.myform.connectButton.disabled = false;
@@ -111,8 +112,7 @@
         if (window.rectObjects.length) {
             for (i in window.rectObjects) {
                 if (window.rectObjects[i].ro_id == rectObject.id) {
-                    // return true;
-                    console.log('要删除的对象',window.rectObjects[i]);
+                    // return true;;
                     return window.rectObjects[i];
                 }
             }
@@ -124,7 +124,6 @@
     function updateBattle(dataList) {
         for (n in dataList) {
             var rectObject = dataList[n];
-            console.log(rectObject.name, rectObject.x, rectObject.y);
             var left = Number(rectObject.x);
             var top = Number(rectObject.y);
             var width = Number(rectObject.width);
@@ -145,29 +144,30 @@
 
             target_obj = exists(rectObject);
             if (target_obj) {
-                console.log('更新');
                 // 判断目标是否已经死亡
                 if(rectObject.status == STATUS_DEAD){
                     window.battleField.remove(target_obj);
                     window.battleField.requestRenderAll();
                 }
+                console.log(rectObject.id, left, top, angle);
                 window.rectObjects[i].set({'left': left, 'top': top ,'angle': angle});
                 // window.battleField.renderAll()
-                window.battleField.requestRenderAll()
+                window.battleField.renderAll()
             }
             else {
-
-                var canvas = new fabric.Canvas('c');
+                console.log('创建新对象')
                 var imgElement = document.getElementById('my-image');
                 var imgInstance = new fabric.Image(imgElement, {
-                  left: left,
-                  top: top,
-                  angle: angle,
+                    left: left,
+                    top: top,
+                    angle: angle,
+                    originX: 'center',
+                    originY: 'center'
                 });
-                imgInstance.ro_id = rectObject.id
-                imgInstance.ro_type = rectObject.type
+                imgInstance.ro_id = rectObject.id;
+                imgInstance.ro_type = rectObject.type;
                 window.battleField.add(imgInstance);
-                window.rectObjects.push(imgInstance)
+                window.rectObjects.push(imgInstance);
                 /*
                 console.log('添加')
                 var rect = new fabric.Rect({
@@ -219,9 +219,10 @@
     <div id="output"></div>
 
     <form name="myform">
+        <!--
         <p>
             <textarea name="outputtext" style="width:100%;height:280px;font-size: 10px;"></textarea>
-        </p>
+        </p>-->
         <!--<p>-->
         <!--<textarea name="inputtext" cols="50"></textarea>-->
         <!--</p>-->

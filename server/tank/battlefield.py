@@ -6,7 +6,7 @@ from server.tank.barrier import Barrier
 from server.tank.tank import *
 import json
 
-class Battlefield(RectObject):
+class Battlefield(BattleObject):
     """
     战场类
     用于计算和保存所有战场战况相关的数据
@@ -24,24 +24,6 @@ class Battlefield(RectObject):
         self.barriers = []
         self.bullets = []
 
-    def is_on_edge(self, _tank: RectObject) -> bool:
-        """
-        检测所给坦克是否到达战场边沿
-        :param _tank:坦克对象
-        :return:布尔值，在战场边沿为True
-        """
-        # import pdb;pdb.set_trace()
-        pos = _tank.get_position()
-        x = pos[0]
-        y = pos[1]
-        width = _tank.width
-        height = _tank.height
-
-        if x <= 0 or (x + width) >= self.width or y <= 0 or (y + height) >= self.height:
-            # print('{}到达战场边沿'.format(_tank.name))
-            return True
-        return False
-
     def collision_stat_update(self):
         """
         更新所有坦克的碰撞状态
@@ -54,9 +36,9 @@ class Battlefield(RectObject):
         for _tank in self.tanks:
 
             # 坦克达到战场边界停止移动
-            if self.is_on_edge(_tank):
-                print('[服务端]提示<{}>抵达边界停止'.format(_tank))
-                _tank.stop()
+            # if _tank.is_on_edge():
+            #     print('[服务端]提示<{}>抵达边界停止'.format(_tank))
+            #     _tank.stop()
 
             # 先将状态重置为正常，而后根据碰撞检测再修改设置
             # _tank.ready()
@@ -73,7 +55,7 @@ class Battlefield(RectObject):
 
         # 当子弹到达战场边界自毁
         for _bullet in self.bullets:
-            if self.is_on_edge(_bullet):
+            if self.limit_bound():
                 print('[服务端]提示<{}>抵达边界销毁'.format(_bullet))
                 # self.bullets.remove(_bullet)
                 _bullet.die(self.remove_object)
@@ -111,7 +93,7 @@ class Battlefield(RectObject):
     def get_bullets(self):
         return self.bullets
 
-    def remove_object(self, rectObject: RectObject):
+    def remove_object(self, rectObject: BattleObject):
 
         if rectObject in self.bullets:
             self.bullets.remove(rectObject)
@@ -165,12 +147,15 @@ class Battlefield(RectObject):
             # 当前版本每次只能接收一个坦克的更新信息，所有每次只更新一个坦克
             for tank in self.tanks:
                 if tank.id == tank_id:
-                    tank.set_direction(tankinfo['direction'])
-                    tank.set_status(tankinfo['status'])
-                if tankinfo['fire'] == 'on':
+                    # 客户端启动之初可能会有不完整的指令发来，字段使用前需要检测是否可用
+                    if 'direction' in tankinfo.keys():
+                        tank.set_direction(tankinfo['direction'])
+                    if 'status' in tankinfo.keys():
+                        tank.set_status(tankinfo['status'])
+                if tankinfo.get('fire', None) == 'on':
                     # todo 创建子弹对象
                     pass
 
         self.update_tanks()
         self.update_bullets()
-        self.collision_stat_update()
+        # self.collision_stat_update()

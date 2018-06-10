@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8"/>
+
+<title>WebSocket Test</title>
+<script src="static/js/fabric.js"></script>
+<script src="static/js/websocket_worker.js"></script>
+<script language="javascript" type="text/javascript">
+
+
+    function init() {
+        // 初始化战场
+        init_battlefield();
+
+        if (typeof(Worker) !== "undefined") {
+            // 检测浏览器是否支持worker（以下hack用于应对chrome不支持本地worker的问题）
+            w = new Worker(URL.createObjectURL(new Blob(["("+worker_function.toString()+")()"], {type: 'text/javascript'})));
+            w.onmessage = function (event) {
+
+                updateBattle(event.data);
+                console.log(event.data);
+            };
+        }
+        else {
+            // 不支持
+            alert('当前浏览器不支持web worker功能')
+        }
+    }
+
+    window.addEventListener("load", init, false);
+
+
+    function init_battlefield() {
+
+        // create a wrapper around native canvas element (with id="c")
+        window.battleField = new fabric.Canvas('c');
+        window.rectObjects = [];
+    }
+
+    // 检测坦克是否已经存在于战场中,存在则返回该对象，否则返回false
+    function exists(rectObject) {
+        // var exclude = ['barrier'];
+        if (window.rectObjects.length) {
+            for (i in window.rectObjects) {
+                if (window.rectObjects[i].ro_id == rectObject.id) {
+                    // return true;;
+                    return window.rectObjects[i];
+                }
+            }
+        }
+        return false
+
+    }
+
+    function updateBattle(dataList) {
+        var STATUS_READY = 1;
+        var STATUS_DEAD = 2;
+        var STATUS_STOP = 3;
+        var STATUS_MOVING = 4;
+
+        var MAX_VELOCITY = 5;
+
+        var DIRECTION_UP = 1;
+        var DIRECTION_DOWN = 2;
+        var DIRECTION_LEFT = 3;
+        var DIRECTION_RIGHT = 4;
+
+        for (n in dataList) {
+            var rectObject = dataList[n];
+            var left = Number(rectObject.x);
+            var top = Number(rectObject.y);
+            var width = Number(rectObject.width);
+            var height = Number(rectObject.height);
+            var direction = Number(rectObject.direction);
+            var angle = 0;
+            switch (direction) {
+                case 1:
+                    angle = -90;
+                    break;
+                case 2:
+                    angle = 90;
+                    break;
+                case 3:
+                    angle = 180;
+                    break;
+            }
+
+            target_obj = exists(rectObject);
+            if (target_obj) {
+                // 判断目标是否已经死亡
+                if (rectObject.status == STATUS_DEAD) {
+                    window.battleField.remove(target_obj);
+                    window.battleField.requestRenderAll();
+                }
+                console.log(rectObject.id, left, top, angle);
+                window.rectObjects[i].set({'left': left, 'top': top, 'angle': angle});
+                // window.battleField.renderAll()
+                window.battleField.renderAll()
+            }
+            else {
+                console.log('创建新对象')
+                var imgElement = document.getElementById('my-image');
+                var imgInstance = new fabric.Image(imgElement, {
+                    left: left,
+                    top: top,
+                    angle: angle,
+                    originX: 'center',
+                    originY: 'center'
+                });
+                imgInstance.ro_id = rectObject.id;
+                imgInstance.ro_type = rectObject.type;
+                window.battleField.add(imgInstance);
+                window.rectObjects.push(imgInstance);
+            }
+
+        }
+    }
+
+
+</script>
+<div style="width:800px;height:600px;border:1px solid gray;margin:4px auto">
+
+    <canvas id='c' width="800px" height="600px"></canvas>
+
+</div>
+
+<img src="static/imgs/tank0.png" id="my-image" style="display: none;">
+
+</html>
+

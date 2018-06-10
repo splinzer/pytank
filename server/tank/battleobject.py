@@ -4,7 +4,7 @@
 # @time   : 2018 下午7:33
 
 
-class RectObject():
+class BattleObject():
     """物体类"""
     # 物体状态
     # STATUS_READY 就绪状态
@@ -23,7 +23,7 @@ class RectObject():
     DIRECTION_LEFT = 3
     DIRECTION_RIGHT = 4
 
-    def __init__(self, width: int, height: int, x: int = 0, y: int = 0):
+    def __init__(self, width: int = 64, height: int = 64, x: int = 0, y: int = 0):
         """
         初始化
         :param name: 名称
@@ -33,10 +33,12 @@ class RectObject():
         :param y: y坐标（以右上角为原点，向下为y轴）
         """
         self.id = 'rectobject'
-        self.id = None
         self.width = width
         self.height = height
-        # self.weapon_type = 'RectObject'
+        # 所在战场
+        self.battlefield = None
+        self.battlefield_id = None
+        # self.weapon_type = 'BattleObject'
         # 以左上角为坐标基准点
         self.x = x
         self.y = y
@@ -46,6 +48,9 @@ class RectObject():
         self.velocity = self.MAX_VELOCITY
         # 自毁延时,状态变为STATUS_DEAD后多久删除自己，这里的值不是一个时间，而是update的次数
         self.countdown = 1
+
+        # 为True表示当前被阻挡了，可能碰到了障碍物或碰到了战场边界
+        self.block = False
 
     def get_velocity(self):
         return self.velocity
@@ -127,6 +132,10 @@ class RectObject():
             x += velocity
         # print(self.name, x, y)
         self.set_position(x, y)
+        # 每走一步进行一次越界检测
+        self.limit_bound()
+        # 每走一步进行一次碰撞检测
+        # todo 物体碰撞检测
 
     def get_status(self):
         return self.status
@@ -139,18 +148,58 @@ class RectObject():
 
     def ready(self):
         self.set_status(self.STATUS_READY)
+
     # 自杀函数，callback是回调函数，用于销毁rectobject对象
     def die(self, callback):
         self.die_callback = callback
         self.set_status(self.STATUS_DEAD)
 
-    # 自毁函数，只有当self.countdown为零时触发.会自动调用，不要手动调用
+    # 自毁函数，当self.countdown为零时触发.会自动调用，不要手动调用
     def __destroy(self):
         self.die_callback(self)
         del self
 
     def __del__(self):
         pass
+
+    def limit_bound(self) -> bool:
+        """
+        检测对象是否到达战场边沿，是的话将对象的阻塞状态设置为True
+        :param _tank:坦克对象
+        :return:布尔值，在战场边沿为True
+        """
+
+        pos = self.get_position()
+        x = pos[0]
+        y = pos[1]
+        width = self.width
+        height = self.height
+        # 定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
+        delta = 7
+        # n_x和n_y是发生碰到边界时反弹后物体的新坐标
+        n_x = x
+        n_y = y
+
+        if x <= width / 2:
+            n_x = x + delta
+
+        if (x + width / 2) >= self.battlefield.width:
+            n_x = x - delta
+
+        if y <= height / 2:
+            n_y = y + delta
+
+        if (y + height / 2) >= self.battlefield.height:
+            n_y = y - delta
+
+        if (n_x, n_y) != (x, y):
+            # 反弹
+            self.set_position(n_x, n_y)
+            self.block = True
+            return True
+
+        self.block = False
+        return False
 
     def update(self):
         # 自毁倒计时计数
@@ -160,7 +209,11 @@ class RectObject():
                 return
             self.countdown -= 1
 
-        # print('status:{},STATUS_MOVING:{}'.format(self.status,STATUS_MOVING))
         if self.status == self.STATUS_MOVING:
             print('[rectobject update被调用]')
+
             self.move_step(self.direction, self.velocity)
+            # if self.is_on_edge():
+            #     self.stop()
+            # else:
+            #     self.move_step(self.direction, self.velocity)

@@ -11,7 +11,7 @@ from client.clientcoder import Coder
 import json
 
 # 战场更新频率
-FRAMERATE = 0.1
+FRAMERATE = 0.05
 # webscoket服务器host
 HOST = ''
 # socket服务端口

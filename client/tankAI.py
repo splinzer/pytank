@@ -7,7 +7,7 @@ time   : 2018 下午3:37
 
 # from multiprocessing import Connection
 from time import sleep
-
+from random import randint
 
 class TankAI():
     """
@@ -158,13 +158,26 @@ class TankAI():
         """
         self.update_action('fire', 'off')
 
-    def rotate_to(self, direction):
+    def turn_to(self, direction):
         """
         内置方法，转向到direction这个方向
         :param direction:
         :return:
         """
         self.update_action('direction', direction)
+
+    def random_turn(self):
+        """
+        内置方法：让坦克随机转弯
+        :return:
+        """
+        directions = [self.DIRECTION_DOWN,
+                     self.DIRECTION_UP,
+                     self.DIRECTION_LEFT,
+                     self.DIRECTION_RIGHT]
+        direction = randint(0,len(directions))
+
+        self.turn_to(direction)
 
     def update_action(self, type, value):
         self.action.update({type: value})

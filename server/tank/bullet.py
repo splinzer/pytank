@@ -2,10 +2,10 @@
 # @author : Guoxi
 # @email  : splinzer@gmail.com
 # @time   : 2018 上午8:56
-from server.tank.rectobject import *
+from server.tank.battleobject import *
 
 
-class Bullet(RectObject):
+class Bullet(BattleObject):
     """
     子弹类
     """

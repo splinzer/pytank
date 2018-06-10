@@ -25,7 +25,8 @@ PORT = 9000
 # webscoket服务器端口
 WEBSOCKET_PORT = 8000
 # 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = '/client/websocket.html'
+# WEBSOCKET_CLIENT_URL = '/client/websocket.html'
+WEBSOCKET_CLIENT_URL = '/client/webworker.html'
 
 
 def start_websocket_server(queue: Queue):
@@ -218,6 +219,8 @@ def createBattle(tank_count: int):
         tank = Tank(tank_id)
         # 设置坦克所属战场
         tank.battlefield_id = bt.id
+        tank.battlefield = bt
+
         tank.set_position(*get_random_position(battle_size, (tank.width, tank.height)))
         tank.set_status(Tank.STATUS_MOVING)
         tank.set_direction(Tank.DIRECTION_RIGHT)

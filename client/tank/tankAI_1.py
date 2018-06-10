@@ -5,7 +5,7 @@ email  : splinzer@gmail.com
 time   : 2018 下午2:08
 '''
 from client.tankAI import *
-
+from random import randint
 
 class AI(TankAI):
     """
@@ -38,6 +38,7 @@ class AI(TankAI):
         :return:
         """
         self.name = 'tank1'
+        self.move(self.DIRECTION_RIGHT, 5)
 
     def on_update(self, battle):
         """
@@ -51,23 +52,28 @@ class AI(TankAI):
 
         # print('tankAI_1:', tanks)
         # print('tankAI_1:', tanks[0])
-        # print('tankAI_1:', self.mytank.x)
 
-        self.move(self.DIRECTION_LEFT, 5)
+        # 使用json反序列化后，python中的bool类型会被错转成str
+        if self.mytank.block == 'True' or randint(0,10) == 5:
+            self.random_turn()
 
-        for tank in tanks:
-            # 如探测到敌方坦克进入攻击范围，发起攻击
-            direction = self.is_nearby(tank)
-            if direction and tank == self.mytank:
-                self.fire(weapon=self.WEAPON_1)
 
-        for barrier in barriers:
-            # 蔽开障碍物
-            pass
 
-        for bullet in bullets:
-            # 躲避子弹
-            pass
+        # for tank in tanks:
+        #     # 如探测到敌方坦克进入攻击范围，发起攻击
+        #     direction = self.is_nearby(tank)
+        #     if direction and tank == self.mytank:
+        #         self.fire(weapon=self.WEAPON_1)
+        #
+        # for barrier in barriers:
+        #     # 蔽开障碍物
+        #     pass
+        #
+        # for bullet in bullets:
+        #     # 躲避子弹
+        #     pass
+
+
 
     def is_nearby(self, tank):
         """

@@ -1,8 +1,8 @@
-from server.tank.rectobject import *
+from server.tank.battleobject import *
 from server.tank.bullet import Bullet
 
 
-class Tank(RectObject):
+class Tank(BattleObject):
     """
     坦克类
     """
@@ -10,7 +10,7 @@ class Tank(RectObject):
     WEAPON_2 = 2
 
     def __init__(self, id):
-        super().__init__(width=64, height=64, x=0, y=0)
+        super().__init__()
         self.id = id
         self.type = 'tank'
         self.life = 100
@@ -18,9 +18,8 @@ class Tank(RectObject):
         self.weapon1 = 500
         self.weapon2 = 500
         self.status = self.STATUS_READY
+
         self.socket_addr = None
-        # 坦克所在战场
-        self.battlefield = None
 
     def is_bullet_empty(self, weapon: 'weapon type'):
         """

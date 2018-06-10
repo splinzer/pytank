@@ -12,5 +12,5 @@ class Battle():
         self.bullets = bullets
         self.barriers = barriers
         self.mytank = None
-        self.width = 600
-        self.height = 400
+        self.width = 800
+        self.height = 600

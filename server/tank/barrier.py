@@ -2,10 +2,10 @@
 # @author : Guoxi
 # @email  : splinzer@gmail.com
 # @time   : 2018 下午7:33
-from server.tank.rectobject import RectObject
+from server.tank.battleobject import BattleObject
 
 
-class Barrier(RectObject):
+class Barrier(BattleObject):
     """障碍物"""
 
     pass
