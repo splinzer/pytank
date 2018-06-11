@@ -15,6 +15,7 @@ from socket import *
 from random import randint
 from server.tank.infocoder import InfoCoder
 import json
+import zlib
 
 # 战场更新频率
 FRAMERATE = 0.1
@@ -27,7 +28,8 @@ WEBSOCKET_PORT = 8000
 # 观战网页文件的本地地址
 # WEBSOCKET_CLIENT_URL = '/client/websocket.html'
 WEBSOCKET_CLIENT_URL = '/client/webworker.html'
-
+# 缓冲区大小
+BUFFER_SIZE = 2096
 
 def start_websocket_server(queue: Queue):
     SimpleBroadServer.queue = queue
@@ -84,14 +86,14 @@ def main():
     main_p = Process(target=mainloop, args=(battle_list_shared, [in_queue], [websk_queue, out_queue]))
     main_p.start()
 
-    # 启动战场情报下发伺服进程
+    # 启动战场情报下发伺服进程：将战场数据发给客户端
     send_p = Process(target=sendinfo_to_client, args=(s, out_queue, client_list_shared))
     send_p.start()
 
     # todo 实现多个战斗同时进行
     while True:
         # 验证用户密码密码
-        data, addr = s.recvfrom(1024)
+        data, addr = s.recvfrom(BUFFER_SIZE)
         data = data.decode()
 
         if data == '':
@@ -159,8 +161,6 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
                     print(f'[server]战场数据更新<{tankinfo}>')
                     bt = battle_list_shared[tankinfo['battle_id']]
                     # 更新对应战场
-                    # todo 战场数据不更新的bug关注点
-                    print('[server]todo 战场数据不更新的bug关注点')
                     bt.update_before_send(tankinfo)
                     # 注意，这行代码看似多余，其实是为了避免一个Manager的bug
                     # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
@@ -180,7 +180,11 @@ def sendinfo_to_client(s: socket, queue: Queue, client_list_shared):
             coder = InfoCoder()
             data = coder.encoder(data)
             for addr in client_list_shared.keys():
-                s.sendto(data.encode(), addr)
+
+                # 传之前先对数据进行压缩
+                data = zlib.compress(data.encode())
+
+                s.sendto(data, addr)
                 print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
         sleep(FRAMERATE)
 

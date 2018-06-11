@@ -9,6 +9,8 @@ from importlib import import_module
 from pathlib import Path
 from client.clientcoder import Coder
 import json
+import zlib
+
 
 # 战场更新频率
 FRAMERATE = 0.05
@@ -22,7 +24,8 @@ WEBSOCKET_PORT = 8000
 WEBSOCKET_CLIENT_URL = '/client/websocket.html'
 # 坦克AI数量有效范围
 ALLOW_COUNT = (2, 5)
-
+# 缓冲区大小
+BUFFER_SIZE = 2096
 
 class Client:
     def __init__(self):
@@ -51,7 +54,7 @@ class Client:
             msg = 'LOGIN' + username + '|' + password + '|' + str(tank_count)
             self.s.send(msg.encode())
             # 服务器响应
-            response = self.s.recv(1024).decode()
+            response = self.s.recv(BUFFER_SIZE).decode()
             # 响应内容格式：'ok|battle_id|tank_id1|tank_id2|...'
             print('[client]收到<登录响应>：', response)
             response = response.split('|')
@@ -69,12 +72,16 @@ class Client:
 
         while True:
             # 接收服务端战场信息
-            data = self.s.recv(1024)
+            data = self.s.recv(BUFFER_SIZE)
             print('[client]收到<战场数据>:', data)
             # 判断游戏结束
             if data == 'over':
                 # todo 显示游戏结果
                 pass
+
+
+            # 使用前解压数据
+            data = zlib.decompress(data)
 
             data = data.decode()
             # 将信息通过queue转发给各坦克AI和websocket
