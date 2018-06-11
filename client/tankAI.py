@@ -175,7 +175,12 @@ class TankAI():
                      self.DIRECTION_UP,
                      self.DIRECTION_LEFT,
                      self.DIRECTION_RIGHT]
-        direction = randint(0,len(directions))
+        n = randint(0, len(directions) - 1)
+
+        direction = directions[n]
+
+        print(f'n:{n},{len(directions)}')
+
 
         self.turn_to(direction)
 

@@ -18,7 +18,7 @@
             w.onmessage = function (event) {
 
                 updateBattle(event.data);
-                console.log(event.data);
+                // console.log(event.data);
             };
         }
         else {
@@ -92,7 +92,7 @@
                     window.battleField.remove(target_obj);
                     window.battleField.requestRenderAll();
                 }
-                console.log(rectObject.id, left, top, angle);
+                // console.log(rectObject.id, left, top, angle);
                 window.rectObjects[i].set({'left': left, 'top': top, 'angle': angle});
                 // window.battleField.renderAll()
                 window.battleField.renderAll()
