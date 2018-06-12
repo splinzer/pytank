@@ -23,7 +23,8 @@ class InfoCoder():
     FILTER = ['socket_addr',
               'battlefield',
               'die_callback',
-              'countdown']
+              'countdown',
+              'owner']
 
     def encoder(self, bt: Battlefield):
         ls = ''

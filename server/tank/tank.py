@@ -28,7 +28,7 @@ class Tank(BattleObject):
         else:
             return False
 
-    def use_one_bullet(self, weapon):
+    def use_one_bullet(self):
         if self.ammo != 0:
             self.ammo -= 1
 
@@ -52,10 +52,12 @@ class Tank(BattleObject):
 
     def fire(self):
         if not self.is_bullet_empty():
-            bullet = Bullet(owner=self.id)
-            bullet.set_position(*self.get_center())
-
-            bullet.set_direction(self.direction)
+            # todo 实现发射
+            print('###############射击')
+            bullet = Bullet(owner_id=self.id, battlefield=self.battlefield, owner = self)
+            # bullet.set_position(*self.get_center())
+            #
+            # bullet.set_direction(self.direction)
             bullet.set_status(self.STATUS_MOVING)
             self.battlefield.add_bullet(bullet)
             self.use_one_bullet()

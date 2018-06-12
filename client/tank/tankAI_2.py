@@ -55,9 +55,8 @@ class AI(TankAI):
         # print('tankAI_1:', tanks[0])
 
         self.random_move(battle)
+        self.random_fire()
 
-        if randint(0, 10) == 5:
-            self.fire()
         # for tank in tanks:
         #     # 如探测到敌方坦克进入攻击范围，发起攻击
         #     direction = self.is_nearby(tank)

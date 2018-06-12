@@ -121,6 +121,7 @@ def main():
         else:
             # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
             print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
+            # 把客户端指令存入消息队列，有mainloop进程进行处理
             in_queue.put(data)
             sleep(FRAMERATE)
 
@@ -139,7 +140,7 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
 
     while True:
 
-        # 需要首先将战场信息发到客户端（否则服务端和客户端都会等待阻塞）
+        # 需要首先将战场信息发到客户端（避免服务端和客户端都会等待阻塞）
         for out_q in out_queues_list:
             for bt in battle_list_shared.values():
                 # 将战场信息放入消息队列

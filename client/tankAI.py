@@ -163,6 +163,14 @@ class TankAI():
         """
         self.update_action('direction', direction)
 
+    def random_fire(self):
+        n = randint(0,5)
+        if n == 5:
+            self.fire()
+        else:
+            self.hold_fire()
+
+
     def void_edge(self, battle, delta=7):
         """
         根据提供的阈值来检测是否靠近战场边界，返回不会发生碰撞的方向
@@ -221,7 +229,6 @@ class TankAI():
     def random_move(self, battle):
         near_edge, avai_direct = self.void_edge(battle)
         if near_edge:
-            print('################靠近边界', avai_direct)
             self.random_turn(avai_direct)
 
     def update_action(self, type, value):

@@ -14,7 +14,7 @@
 
         if (typeof(Worker) !== "undefined") {
             // 检测浏览器是否支持worker（以下hack用于应对chrome不支持本地worker的问题）
-            w = new Worker(URL.createObjectURL(new Blob(["("+worker_function.toString()+")()"], {type: 'text/javascript'})));
+            w = new Worker(URL.createObjectURL(new Blob(["(" + worker_function.toString() + ")()"], {type: 'text/javascript'})));
             w.onmessage = function (event) {
 
                 updateBattle(event.data);
@@ -67,6 +67,7 @@
 
         for (n in dataList) {
             var rectObject = dataList[n];
+            var rect_type = rectObject.type
             var left = Number(rectObject.x);
             var top = Number(rectObject.y);
             var width = Number(rectObject.width);
@@ -99,18 +100,35 @@
             }
             else {
                 console.log('创建新对象')
-                var imgElement = document.getElementById('my-image');
-                var imgInstance = new fabric.Image(imgElement, {
-                    left: left,
-                    top: top,
-                    angle: angle,
-                    originX: 'center',
-                    originY: 'center'
-                });
-                imgInstance.ro_id = rectObject.id;
-                imgInstance.ro_type = rectObject.type;
-                window.battleField.add(imgInstance);
-                window.rectObjects.push(imgInstance);
+                switch (rect_type) {
+                    case 'tank':
+                        var imgElement = document.getElementById('my-image');
+                        var imgInstance = new fabric.Image(imgElement, {
+                            left: left,
+                            top: top,
+                            angle: angle,
+                            originX: 'center',
+                            originY: 'center'
+                        });
+                        imgInstance.ro_id = rectObject.id;
+                        imgInstance.ro_type = rectObject.type;
+                        window.battleField.add(imgInstance);
+                        window.rectObjects.push(imgInstance);
+                        break;
+                    case 'bullet':
+                        var bullet = new fabric.Circle({
+                            left: left,
+                            top: top,
+                            fill: 'red',
+                            radius: width,
+                            originX: 'center',
+                            originY: 'center'
+                        });
+                        bullet.ro_id = rectObject.id
+                        bullet.ro_type = rectObject.type
+                        window.battleField.add(bullet);
+                        window.rectObjects.push(bullet);
+                }
             }
 
         }

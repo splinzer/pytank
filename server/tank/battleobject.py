@@ -32,7 +32,9 @@ class BattleObject():
         :param x: x坐标（以右上角为原点，向左为x轴）
         :param y: y坐标（以右上角为原点，向下为y轴）
         """
+        # id是物体的唯一标识
         self.id = 'rectobject'
+        self.type = 'rectobject'
         self.width = width
         self.height = height
         # 所在战场
@@ -84,11 +86,6 @@ class BattleObject():
         """
         return self.x, self.y
 
-    def get_center(self):
-        x = self.x + self.width // 2
-        y = self.y + self.height // 2
-        return x, y
-
     def isCollide(self, obj, other_obj):
         """
         计算所有物体之间是否有位置重叠，有则视为发生碰撞
@@ -120,8 +117,8 @@ class BattleObject():
         """
         x = self.x
         y = self.y
-        if velocity > self.MAX_VELOCITY:
-            velocity = self.MAX_VELOCITY
+        # if velocity > self.MAX_VELOCITY:
+        #     velocity = self.MAX_VELOCITY
         if direction == self.DIRECTION_UP:
             y -= velocity
         elif direction == self.DIRECTION_DOWN:
@@ -211,7 +208,6 @@ class BattleObject():
                 return
             self.countdown -= 1
         if self.status == self.STATUS_MOVING:
-            print('[rectobject update被调用]')
 
             self.move_step(self.direction, self.velocity)
             # if self.is_on_edge():

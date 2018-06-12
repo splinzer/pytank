@@ -152,9 +152,10 @@ class Battlefield(BattleObject):
                         tank.set_direction(tankinfo['direction'])
                     if 'status' in tankinfo.keys():
                         tank.set_status(tankinfo['status'])
-                if tankinfo.get('fire', None) == 'on':
-                    # todo 创建子弹对象
-                    pass
+                    if tankinfo.get('fire', None) == 'on':
+                        # todo 创建子弹对象
+                        tank.fire()
+
         # 客户端无指令时，也需要运算更新
         self.update_tanks()
         self.update_bullets()
