@@ -191,10 +191,14 @@ class BattleObject():
 
         if (y + height / 2) >= self.battlefield.height:
             n_y = y - delta
-
+        # 发生反弹位移，说明已经碰到了边界
         if (n_x, n_y) != (x, y):
             # 反弹
             self.set_position(n_x, n_y)
+            self.set_status(self.STATUS_STOP)
+
+            print('##########################停止了')
+
             self.block = True
             return True
 
@@ -208,7 +212,7 @@ class BattleObject():
                 self.__destroy()
                 return
             self.countdown -= 1
-
+        print('#############################', self.status )
         if self.status == self.STATUS_MOVING:
             print('[rectobject update被调用]')
 

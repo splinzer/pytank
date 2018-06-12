@@ -147,7 +147,7 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
 
         # 将客户端指令分流至各自所属的战场
         for in_q in in_queues_list:
-            print(f'in_q:{in_q.empty()}')
+
             if not in_q.empty():
                 # 取出指令，示例格式："{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}"
                 battleinfo = in_q.get()
@@ -180,12 +180,12 @@ def sendinfo_to_client(s: socket, queue: Queue, client_list_shared):
             coder = InfoCoder()
             data = coder.encoder(data)
             for addr in client_list_shared.keys():
-
+                print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
                 # 传之前先对数据进行压缩
                 data = zlib.compress(data.encode())
 
                 s.sendto(data, addr)
-                print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
+
         sleep(FRAMERATE)
 
 

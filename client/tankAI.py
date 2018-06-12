@@ -124,7 +124,6 @@ class TankAI():
         :param battle:
         :return:
         """
-        pass
 
     def move(self, direction: int, velocity: int = 5):
         """
@@ -171,16 +170,14 @@ class TankAI():
         内置方法：让坦克随机转弯
         :return:
         """
-        directions = [self.DIRECTION_DOWN,
+        directions = {self.DIRECTION_DOWN,
                      self.DIRECTION_UP,
                      self.DIRECTION_LEFT,
-                     self.DIRECTION_RIGHT]
+                     self.DIRECTION_RIGHT} - {self.mytank.direction}
+        directions = list(directions)
         n = randint(0, len(directions) - 1)
 
         direction = directions[n]
-
-        print(f'n:{n},{len(directions)}')
-
 
         self.turn_to(direction)
 
