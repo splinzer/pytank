@@ -37,7 +37,7 @@
         window.rectObjects = [];
     }
 
-    // 检测坦克是否已经存在于战场中,存在则返回该对象，否则返回false
+    // 检测坦克是否已经存在于战场中,存在则返回该fabric对象，否则返回false
     function exists(rectObject) {
         // var exclude = ['barrier'];
         if (window.rectObjects.length) {
@@ -89,8 +89,9 @@
             target_obj = exists(rectObject);
             if (target_obj) {
                 // 判断目标是否已经死亡
-                if (rectObject.status == STATUS_DEAD) {
+                if (rectObject.dead == 'True') {
                     window.battleField.remove(target_obj);
+                    // window.rectObjects.remove(target_obj); todo 删除已经销毁的对象
                     window.battleField.requestRenderAll();
                 }
                 // console.log(rectObject.id, left, top, angle);

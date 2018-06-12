@@ -82,7 +82,7 @@ class Client:
 
             # 使用前解压数据
             data = zlib.decompress(data)
-            print('[client]收到<战场数据>:', data)
+            # print('[client]收到<战场数据>:', data)
             data = data.decode()
             # 将信息通过queue转发给各坦克AI和websocket
             for in_queue in self.in_queues:
@@ -102,7 +102,7 @@ class Client:
     def send_to_server(self, action_str):
         # 使用json对指令进行序列化处理
         action_json = json.dumps(action_str)
-        print('[client]发出<指令>:', action_json)
+        # print('[client]发出<指令>:', action_json)
         # 发给服务端
         self.s.send(action_json.encode())
 

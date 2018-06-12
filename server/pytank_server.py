@@ -120,7 +120,7 @@ def main():
 
         else:
             # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
-            print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
+            # print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
             # 把客户端指令存入消息队列，有mainloop进程进行处理
             in_queue.put(data)
             sleep(FRAMERATE)
@@ -153,7 +153,7 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
             if not in_q.empty():
                 # 取出指令，示例格式："{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}"
                 battleinfo = in_q.get()
-                print(f'[server]指令:{battleinfo}')
+                # print(f'[server]指令:{battleinfo}')
                 # 将序列化的指令恢复成tank对象
                 tankinfo = json.loads(battleinfo)
                 # 在客户端启动之初，会因收到不完整的指令导致错误，这里使用需要异常处理
@@ -190,7 +190,7 @@ def sendinfo_to_client(s: socket, out_queue: Queue, client_list_shared):
             coder = InfoCoder()
             data = coder.encoder(data)
             for addr in client_list_shared.keys():
-                print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
+                # print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
                 # 传之前先对数据进行压缩
                 data = zlib.compress(data.encode())
                 # 将数据发送给客户端
