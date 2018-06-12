@@ -9,8 +9,6 @@ class Bullet(BattleObject):
     """
     子弹类
     """
-    WEAPON_1 = 0
-    WEAPON_2 = 1
     MAX_VELOCITY = 10
     __no__ = 1
 
@@ -19,11 +17,6 @@ class Bullet(BattleObject):
         self.name = '{}_{}'.format(owner, Bullet.__no__)
         Bullet.__no__ += 1
         self.type = 'bullet'
-        self.weapon_type = Bullet.WEAPON_1
-
-    def set_type(self, weapon: 'weapon type'):
-        self.weapon_type = weapon
-
 
 
 def main():

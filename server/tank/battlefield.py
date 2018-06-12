@@ -133,7 +133,7 @@ class Battlefield(BattleObject):
             _bullet.update()
 
     # 计算并刷新数据
-    def update_before_send(self, tankinfo):
+    def update_before_send(self, tankinfo=None):
         """
         根据客户端传回的指令更新战场
         :param tankinfo:坦克信息对象，如：{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}
@@ -155,7 +155,7 @@ class Battlefield(BattleObject):
                 if tankinfo.get('fire', None) == 'on':
                     # todo 创建子弹对象
                     pass
-
+        # 客户端无指令时，也需要运算更新
         self.update_tanks()
         self.update_bullets()
         # self.collision_stat_update()

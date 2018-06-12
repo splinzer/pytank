@@ -197,8 +197,6 @@ class BattleObject():
             self.set_position(n_x, n_y)
             self.set_status(self.STATUS_STOP)
 
-            print('##########################停止了')
-
             self.block = True
             return True
 
@@ -212,7 +210,6 @@ class BattleObject():
                 self.__destroy()
                 return
             self.countdown -= 1
-        print('#############################', self.status )
         if self.status == self.STATUS_MOVING:
             print('[rectobject update被调用]')
 

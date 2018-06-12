@@ -7,6 +7,7 @@ time   : 2018 下午2:08
 from client.tankAI import *
 from random import randint
 
+
 class AI(TankAI):
     """
     AI类用于控制坦克的移动、攻击，你应该在这个类里实现所有坦克的控制逻辑
@@ -53,11 +54,7 @@ class AI(TankAI):
         # print('tankAI_1:', tanks)
         # print('tankAI_1:', tanks[0])
 
-        # 使用json反序列化后，python中的bool类型会被错转成str
-        if self.mytank.block == 'True' or randint(0,10) == 5:
-            self.random_turn()
-
-
+        self.random_move(battle)
 
         # for tank in tanks:
         #     # 如探测到敌方坦克进入攻击范围，发起攻击
@@ -75,6 +72,7 @@ class AI(TankAI):
 
 
 
+    # 反弹
     def is_nearby(self, tank):
         """
         示例方法：用于判断敌方坦克与我方坦克在x轴或y轴上是否比较接近

@@ -92,7 +92,7 @@ def main():
 
     # todo 实现多个战斗同时进行
     while True:
-        # 验证用户密码密码
+        # 验证用户密码
         data, addr = s.recvfrom(BUFFER_SIZE)
         data = data.decode()
 
@@ -145,7 +145,8 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
                 # 将战场信息放入消息队列
                 out_q.put(bt)
 
-        # 将客户端指令分流至各自所属的战场
+        # 根据客户端传回来的指令对各战场进行运算，将计算结果放入out_queue队列，由sendinfo_to_client负责发送
+        # todo 客户端无指令的情况下，战场应该也能够运算并下发数据
         for in_q in in_queues_list:
 
             if not in_q.empty():
@@ -158,32 +159,40 @@ def mainloop(battle_list_shared, in_queues_list, out_queues_list):
 
                 # 更新对应战场的数据
                 if tankinfo['battle_id'] in battle_list_shared.keys():
-                    print(f'[server]战场数据更新<{tankinfo}>')
+                    # print(f'[server]战场数据更新<{tankinfo}>')
                     bt = battle_list_shared[tankinfo['battle_id']]
-                    # 更新对应战场
+                    # 根据客户端传来的指令更新对应战场
                     bt.update_before_send(tankinfo)
                     # 注意，这行代码看似多余，其实是为了避免一个Manager的bug
                     # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
                     # 详情参考python官方文档中关于包含像list dict等可变对象时的特殊处理
                     # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
                     battle_list_shared[tankinfo['battle_id']] = bt
+            else:
+                # 客户端无指令的情况
+                # 更新对应战场的数据
+                for id in battle_list_shared.keys():
+                    bt = battle_list_shared[id]
+                    # 更新战场
+                    bt.update_before_send()
 
+                    battle_list_shared[id] = bt
         # 信息下发频率控制
         sleep(FRAMERATE)
 
 
-def sendinfo_to_client(s: socket, queue: Queue, client_list_shared):
+def sendinfo_to_client(s: socket, out_queue: Queue, client_list_shared):
     print('[server]启动<战场数据伺服进程>')
     while True:
-        if not queue.empty():
-            data = queue.get()
+        if not out_queue.empty():
+            data = out_queue.get()
             coder = InfoCoder()
             data = coder.encoder(data)
             for addr in client_list_shared.keys():
                 print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
                 # 传之前先对数据进行压缩
                 data = zlib.compress(data.encode())
-
+                # 将数据发送给客户端
                 s.sendto(data, addr)
 
         sleep(FRAMERATE)

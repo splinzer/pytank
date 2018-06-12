@@ -6,8 +6,6 @@ class Tank(BattleObject):
     """
     坦克类
     """
-    WEAPON_1 = 1
-    WEAPON_2 = 2
 
     def __init__(self, id):
         super().__init__()
@@ -15,30 +13,24 @@ class Tank(BattleObject):
         self.type = 'tank'
         self.life = 100
         self.oil = 100
-        self.weapon1 = 500
-        self.weapon2 = 500
+        self.ammo = 500
         self.status = self.STATUS_READY
 
         self.socket_addr = None
 
-    def is_bullet_empty(self, weapon: 'weapon type'):
+    def is_bullet_empty(self):
         """
         检查是否没子弹了
-        :param weapon:
         :return:
         """
-        if weapon == self.WEAPON_1 and self.weapon1 == 0:
-            return True
-        elif weapon == self.WEAPON_2 and self.weapon2 == 0:
+        if self.ammo == 0:
             return True
         else:
             return False
 
     def use_one_bullet(self, weapon):
-        if weapon == self.WEAPON_1 and self.weapon1 == 0:
-            self.weapon1 -= 1
-        elif weapon == self.WEAPON_2 and self.weapon2 == 0:
-            self.weapon2 -= 1
+        if self.ammo != 0:
+            self.ammo -= 1
 
     def set_socket_addr(self, socket_addr: tuple):
         self.socket_addr = socket_addr
@@ -58,15 +50,15 @@ class Tank(BattleObject):
     def get_oil(self):
         return self.oil
 
-    def fire(self, weapon: 'weapon type'):
-        if not self.is_bullet_empty(weapon):
+    def fire(self):
+        if not self.is_bullet_empty():
             bullet = Bullet(owner=self.id)
             bullet.set_position(*self.get_center())
-            bullet.set_type(weapon)
+
             bullet.set_direction(self.direction)
             bullet.set_status(self.STATUS_MOVING)
             self.battlefield.add_bullet(bullet)
-            self.use_one_bullet(weapon)
+            self.use_one_bullet()
 
 
 def main():

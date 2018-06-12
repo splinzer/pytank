@@ -9,6 +9,7 @@ time   : 2018 下午3:37
 from time import sleep
 from random import randint
 
+
 class TankAI():
     """
     该类作为坦克控制类的超类，封装了一些底层方法，并提供了以下属性和方法便于编写控制逻辑
@@ -46,8 +47,6 @@ class TankAI():
     注意，在一次update函数调用中，tank的同一种状态如果发生多次变化，则以最后一次状态为准
     ./tank目录专用于存放坦克AI程序，系统会自从该目录导入坦克AI程序，请确保所有逻辑都放在一个文件中
     """
-    WEAPON_1 = 1
-    WEAPON_2 = 2
 
     # STATUS_READY 就绪状态
     # STATUS_DEAD 死亡状态，该状态的物体无法移动，且状态不再发生变化
@@ -75,12 +74,10 @@ class TankAI():
         self.in_queue = in_queue
         self.out_queue = out_queue
         # 这里通过tank_id和battle_id为action签名，以便在服务端识别
-        action_sign = {'id': self.id,
-                       'battle_id': self.battle_id}
-        # action用于保存每次update坦克控制程序产生的指令
         # 指令示例：{'id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
-        self.action = {}
-
+        self.action = {'id': self.id,
+                       'battle_id': self.battle_id}
+        last_action = self.action.copy()
         self.on_start()
         while True:
 
@@ -93,10 +90,12 @@ class TankAI():
             # self.update_action('name', self.id)
             # 程序运行之初self.action有可能为空
             if self.action:
-                # 添加签名
-                self.action.update(action_sign)
-                # 将本次update产生的指令放入输出队列
-                self.out_queue.put(self.action)
+                if last_action != self.action:
+                    # 将本次update产生的指令放入输出队列
+                    self.out_queue.put(self.action)
+                    # 记录本次action
+                    last_action = self.action.copy()
+
             sleep(TankAI.FRAMERATE)
 
     def find_myself(self, battleinfo):
@@ -141,13 +140,12 @@ class TankAI():
         """
         self.update_action('status', self.STATUS_STOP)
 
-    def fire(self, weapon):
+    def fire(self):
         """
         内置方法，使用weapon持续射击（使用坦克当前朝向射击）
         :param weapon:武器类型
         :return:
         """
-        self.update_action('weapon', weapon)
         self.update_action('fire', 'on')
 
     def hold_fire(self):
@@ -165,21 +163,66 @@ class TankAI():
         """
         self.update_action('direction', direction)
 
-    def random_turn(self):
+    def void_edge(self, battle, delta=7):
+        """
+        根据提供的阈值来检测是否靠近战场边界，返回不会发生碰撞的方向
+        :param battle: 战场信息对象
+        :param delta: 定义触发阈值，如果坦克距离边界小于该值则触发
+        :return: 集合对象，可用的方向
+        """
+        # 是否靠近边界默认值
+        flag = False
+        x = self.mytank.x
+        y = self.mytank.y
+        width = self.mytank.width
+        height = self.mytank.height
+        # 定义触发阈值，如果坦克距离边界小于该值则触发
+        delta = 7
+        # n_x和n_y是发生碰到边界时反弹后物体的新坐标
+        n_x = x
+        n_y = y
+
+        directions = {self.DIRECTION_DOWN,
+                      self.DIRECTION_UP,
+                      self.DIRECTION_LEFT,
+                      self.DIRECTION_RIGHT}
+        # 靠近左侧边界
+        if x <= width / 2 + delta:
+            flag = True
+            directions = directions - {self.DIRECTION_LEFT}
+        # 靠近右侧边界
+        if (x + width / 2 + delta) >= battle.width:
+            flag = True
+            directions = directions - {self.DIRECTION_RIGHT}
+        # 靠近上边界
+        if y <= height / 2 + delta:
+            flag = True
+            directions = directions - {self.DIRECTION_UP}
+        # 靠近下边界
+        if (y + height / 2 + delta) >= battle.height:
+            flag = True
+            directions = directions - {self.DIRECTION_DOWN}
+
+
+        return flag, directions
+
+    def random_turn(self, directions: set):
         """
         内置方法：让坦克随机转弯
         :return:
         """
-        directions = {self.DIRECTION_DOWN,
-                     self.DIRECTION_UP,
-                     self.DIRECTION_LEFT,
-                     self.DIRECTION_RIGHT} - {self.mytank.direction}
         directions = list(directions)
         n = randint(0, len(directions) - 1)
 
         direction = directions[n]
 
         self.turn_to(direction)
+
+    def random_move(self, battle):
+        near_edge, avai_direct = self.void_edge(battle)
+        if near_edge:
+            print('################靠近边界', avai_direct)
+            self.random_turn(avai_direct)
 
     def update_action(self, type, value):
         self.action.update({type: value})

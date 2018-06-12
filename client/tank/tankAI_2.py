@@ -54,10 +54,10 @@ class AI(TankAI):
         # print('tankAI_1:', tanks)
         # print('tankAI_1:', tanks[0])
 
-        # 使用json反序列化后，python中的bool类型会被错转成str
-        if self.mytank.block == 'True' or randint(0, 10) == 5:
-            self.random_turn()
+        self.random_move(battle)
 
+        if randint(0, 10) == 5:
+            self.fire()
         # for tank in tanks:
         #     # 如探测到敌方坦克进入攻击范围，发起攻击
         #     direction = self.is_nearby(tank)
