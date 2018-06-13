@@ -11,7 +11,6 @@ from client.clientcoder import Coder
 import json
 import zlib
 
-
 # 战场更新频率
 FRAMERATE = 0.05
 # webscoket服务器host
@@ -27,6 +26,7 @@ ALLOW_COUNT = (2, 5)
 # 缓冲区大小
 BUFFER_SIZE = 2096
 
+
 class Client:
     def __init__(self):
         # 战场id
@@ -39,6 +39,9 @@ class Client:
         self.out_queues = []
         self.s = None
         self.connect()
+
+    def game_over(self):
+        pass
 
     def connect(self):
         self.s = socket(AF_INET, SOCK_DGRAM)
@@ -56,7 +59,6 @@ class Client:
             # 服务器响应
             response = self.s.recv(BUFFER_SIZE).decode()
             # 响应内容格式：'ok|battle_id|tank_id1|tank_id2|...'
-            print('[client]收到<登录响应>：', response)
             response = response.split('|')
             if response[0] == 'ok':
                 print('[client]登录成功')
@@ -68,17 +70,17 @@ class Client:
             else:
                 print('[client]登录失败')
                 continue
-        # 主循环
 
+        # 主循环
         while True:
             # 接收服务端战场信息
             data = self.s.recv(BUFFER_SIZE)
 
             # 判断游戏结束
-            if data == 'over':
+            if data == b'gameover':
                 # todo 显示游戏结果
-                pass
-
+                self.game_over()
+                break
 
             # 使用前解压数据
             data = zlib.decompress(data)

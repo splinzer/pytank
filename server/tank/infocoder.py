@@ -25,29 +25,17 @@ class InfoCoder():
               'die_callback',
               'countdown',
               'owner']
-
+    # 只把战场中的坦克、子弹、障碍物进行编码传送
     def encoder(self, bt: Battlefield):
-        ls = ''
+        target_list = ''
 
-        for i in bt.get_all_objects():
-            for k, v in i.__dict__.items():
+        for _object in bt.get_all_objects():
+            for k, v in _object.__dict__.items():
                 if k not in self.FILTER:
                     s = k + ':' + str(v)
-                    ls += s + '|'
-            ls = ls[:-1]
-            ls += ';'
+                    target_list += s + '|'
+            target_list = target_list[:-1]
+            target_list += ';'
 
-        return ls[:-1]
+        return target_list[:-1]
 
-    def encoder_tanks(self, bt: Battlefield):
-        ls = ''
-
-        for i in bt.get_tanks():
-            for k, v in i.__dict__.items():
-                if k not in self.FILTER:
-                    s = k + ':' + str(v)
-                    ls += s + '|'
-            ls = ls[:-1]
-            ls += ';'
-
-        return ls[:-1]

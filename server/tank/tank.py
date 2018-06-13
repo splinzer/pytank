@@ -65,7 +65,7 @@ class Tank(BattleObject):
     def fire(self):
         # 有弹药且坦克生存时才能射击
         if not self.is_bullet_empty() and not self.dead:
-            # todo 实现发射
+
             bullet = Bullet(owner_id=self.id, battlefield=self.battlefield, owner=self)
             # bullet.set_position(*self.get_center())
             #

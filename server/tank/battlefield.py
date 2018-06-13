@@ -24,6 +24,11 @@ class Battlefield(BattleObject):
         self.tanks = []
         self.barriers = []
         self.bullets = []
+        # 标识战斗是否结束
+        self.gameover = False
+
+    def game_over(self):
+        self.gameover = True
 
     def collision_stat_update(self):
         """
@@ -42,12 +47,11 @@ class Battlefield(BattleObject):
                         other_object.stop()
                     # 坦克与子弹相撞子弹销毁，坦克减血，子弹销毁
                     elif other_object.type == 'bullet' \
-                            and one_object.type == 'tank'\
+                            and one_object.type == 'tank' \
                             and other_object.owner != one_object:
                         # 减去1点血
                         one_object.loss_life(20)
                         other_object.suicide()
-
 
     def get_all_objects(self):
         """返回所有战场对象"""
@@ -131,10 +135,13 @@ class Battlefield(BattleObject):
         :param tankinfo:坦克信息对象，如：{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}
         :return:
         """
+        # 判断战斗是否结束：只剩一个坦克或没有坦克
+        if len(self.tanks) <= 1:
+            self.game_over()
+            print(f'[server]战斗结束<{self}>')
+            
         # 先根据客户端传回的指令更新战场
         if tankinfo:
-
-            # todo 指令解码并据此更新战场
             tank_id = tankinfo['id']
             # 当前版本每次只能接收一个坦克的更新信息，所有每次只更新一个坦克
             for tank in self.tanks:
