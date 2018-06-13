@@ -26,9 +26,12 @@ class Battlefield(BattleObject):
         self.bullets = []
         # 标识战斗是否结束
         self.gameover = False
+        # 用于标识战斗结束消息是否已经发给客户端了
+        self.gameover_sended = False
 
     def game_over(self):
         self.gameover = True
+        # todo 需要从共享列表中清除已经结束的战斗
 
     def collision_stat_update(self):
         """
@@ -138,7 +141,6 @@ class Battlefield(BattleObject):
         # 判断战斗是否结束：只剩一个坦克或没有坦克
         if len(self.tanks) <= 1:
             self.game_over()
-            print(f'[server]战斗结束<{self}>')
             
         # 先根据客户端传回的指令更新战场
         if tankinfo:

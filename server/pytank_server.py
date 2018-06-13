@@ -32,6 +32,8 @@ WEBSOCKET_CLIENT_URL = '/client/webworker.html'
 BUFFER_SIZE = 2096
 
 
+# todo bug:战斗接收后服务端仍在给客户端发消息
+
 class GameServer:
 
     def __init__(self):
@@ -41,6 +43,7 @@ class GameServer:
         # 启动websocket伺服进程
         websk_queue = Queue()
         websk_p = Process(target=self.start_websocket_server, args=(websk_queue,))
+        websk_p.daemon = True
         websk_p.start()
 
         # 创建进程内存共享对象
@@ -60,14 +63,18 @@ class GameServer:
         # 开启服务主循环
         # websk_queue,out_queue接收相同的战场数据
         main_p = Process(target=self.mainloop, args=(battle_list_shared, [in_queue], [websk_queue, out_queue]))
+        main_p.daemon = True
         main_p.start()
 
         # 启动战场情报下发伺服进程：将战场数据发给客户端
         send_p = Process(target=self.sendinfo_to_client, args=(s, out_queue, client_list_shared))
+        send_p.daemon = True
         send_p.start()
 
         # todo 实现多个战斗同时进行
         while True:
+            print(battle_list_shared)
+
             # 验证用户密码
             data, addr = s.recvfrom(BUFFER_SIZE)
             data = data.decode()
@@ -137,11 +144,17 @@ class GameServer:
                         bt = battle_list_shared[tankinfo['battle_id']]
                         # 根据客户端传来的指令更新对应战场
                         bt.update_before_send(tankinfo)
+
                         # 注意，这行代码看似多余，其实是为了避免一个Manager的bug
                         # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
                         # 详情参考python官方文档中关于包含像list dict等可变对象时的特殊处理
                         # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
                         battle_list_shared[tankinfo['battle_id']] = bt
+
+                        # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
+                        if bt.gameover and bt.gameover_sended:
+                            del battle_list_shared[tankinfo['battle_id']]
+
                 else:
                     # 客户端无指令的情况
                     # 更新对应战场的数据
@@ -149,10 +162,13 @@ class GameServer:
                         bt = battle_list_shared[id]
                         # 更新战场
                         bt.update_before_send()
-
                         battle_list_shared[id] = bt
+                        # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
+                        if bt.gameover and bt.gameover_sended:
+                            del battle_list_shared[id]
             # 信息下发频率控制
             sleep(FRAMERATE)
+
 
     def sendinfo_to_client(self, s: socket, out_queue: Queue, client_list_shared):
         """

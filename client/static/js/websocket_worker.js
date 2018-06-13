@@ -34,7 +34,7 @@ function worker_function() {
 
     function onWebsocketMessage(evt) {
         // writeToScreen(evt.data + '\n');
-        // console.log(evt.data);
+        console.log(evt.data);
         var data = decoder(evt.data);
         //将获取到的战场信息发给前台浏览器
         postMessage(data);

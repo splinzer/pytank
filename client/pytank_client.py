@@ -4,12 +4,13 @@
 # @time   : 2018 下午7:47
 from socket import *
 from time import sleep
-from multiprocessing import Process, Pipe, Queue
+from multiprocessing import Process, Queue
 from importlib import import_module
 from pathlib import Path
 from client.clientcoder import Coder
 import json
 import zlib
+import sys
 
 # 战场更新频率
 FRAMERATE = 0.05
@@ -41,7 +42,8 @@ class Client:
         self.connect()
 
     def game_over(self):
-        pass
+        print('游戏结束')
+        sys.exit(0)
 
     def connect(self):
         self.s = socket(AF_INET, SOCK_DGRAM)
@@ -75,17 +77,16 @@ class Client:
         while True:
             # 接收服务端战场信息
             data = self.s.recv(BUFFER_SIZE)
-
-            # 判断游戏结束
-            if data == b'gameover':
-                # todo 显示游戏结果
-                self.game_over()
-                break
-
             # 使用前解压数据
             data = zlib.decompress(data)
             # print('[client]收到<战场数据>:', data)
             data = data.decode()
+            # 判断游戏结束
+            if data.rfind('gameover:True') != -1:
+                # todo 显示游戏结果
+                self.game_over()
+                break
+
             # 将信息通过queue转发给各坦克AI和websocket
             for in_queue in self.in_queues:
                 # 反序列化info
@@ -130,6 +131,8 @@ class Client:
             self.out_queues.append(out_queue)
             # 每个坦克控制逻辑对应一个进程
             p = Process(target=m.AI, args=(in_queue, out_queue, self.battle_id, self.tank_id_list[n]))
+            # 主进程若死，子进程也一起
+            p.daemon = True
             p.start()
             n += 1
 

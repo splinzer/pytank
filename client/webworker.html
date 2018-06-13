@@ -62,17 +62,6 @@
     }
 
     function updateBattle(dataList) {
-        let STATUS_READY = 1;
-        let STATUS_DEAD = 2;
-        let STATUS_STOP = 3;
-        let STATUS_MOVING = 4;
-
-        let MAX_VELOCITY = 5;
-
-        let DIRECTION_UP = 1;
-        let DIRECTION_DOWN = 2;
-        let DIRECTION_LEFT = 3;
-        let DIRECTION_RIGHT = 4;
 
         for (n in dataList) {
 
@@ -84,7 +73,19 @@
                     // 激活回放按钮
                     toggleRelayButton();
                     // 显示gameover
-                    alert('游戏结束');
+                    console.log('游戏结束');
+                    // 在战场上显示gameover
+                    var text = new fabric.Text('GameOver!',
+                        {
+                            left: 350,
+                            top: 300,
+                            fontsize: 40,
+                            fontFamily: 'Delicious',
+                            fontWeight: 'bold',
+                            originX: 'center',
+                            originY: 'center'
+                        });
+                    window.battleField.add(text);
                     return
                 }
                 else {
@@ -174,7 +175,7 @@
 </script>
 <div style="width:800px;height:600px;border:1px solid gray;margin:4px auto">
 
-    <canvas id='c' width="800px" height="600px"></canvas>
+    <canvas id='c' width="800" height="600"></canvas>
 
 </div>
 <div id="replay_btns" class="disabledbutton">
