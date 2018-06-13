@@ -17,6 +17,7 @@ class Bullet(BattleObject):
         self.id = '{}_{}'.format(owner_id, Bullet.__no__)
         Bullet.__no__ += 1
         self.type = 'bullet'
+        self.owner_id = owner_id
         self.owner = owner
         self.set_position(*self.get_fire_position())
         self.set_direction(owner.get_direction())

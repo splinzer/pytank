@@ -39,7 +39,7 @@ class AI(TankAI):
         :return:
         """
         self.name = 'tank1'
-        self.move(self.DIRECTION_RIGHT, 5)
+        self.start_move(self.DIRECTION_RIGHT, 5)
 
     def on_update(self, battle):
         """

@@ -7,7 +7,6 @@ class Tank(BattleObject):
     坦克类
     """
 
-    # todo bug：坦克在被摧毁后仍能够发子弹
     # todo bug：坦克相撞后仍能够继续移动的问题
     def __init__(self, id):
         super().__init__()
@@ -76,6 +75,11 @@ class Tank(BattleObject):
             self.use_one_bullet()
 
     def limit_bound(self, delta=7) -> bool:
+        """
+        检测对象是否到达战场边沿，是的话将对象的阻塞状态设置为True
+        :param delta:定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
+        :return:布尔值，在战场边沿为True
+        """
         pos = self.get_position()
         x = pos[0]
         y = pos[1]

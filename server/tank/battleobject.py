@@ -134,7 +134,7 @@ class BattleObject():
         # 每走一步进行一次越界检测
         self.limit_bound()
         # 每走一步进行一次碰撞检测
-        # todo 物体碰撞检测
+
 
     def get_status(self):
         return self.status

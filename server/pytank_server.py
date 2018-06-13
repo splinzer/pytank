@@ -41,6 +41,7 @@ class GameServer:
         s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         s.bind((HOST, PORT))
         # 启动websocket伺服进程
+        # todo bug：websocket只能连接一个浏览器
         websk_queue = Queue()
         websk_p = Process(target=self.start_websocket_server, args=(websk_queue,))
         websk_p.daemon = True

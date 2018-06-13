@@ -46,8 +46,12 @@ class Battlefield(BattleObject):
                 if other_object != one_object and self.is_collide(one_object, other_object):
                     # 坦克相撞停止
                     if other_object.type == 'tank' and one_object.type == 'tank':
+                        # 反弹
+
                         one_object.stop()
+                        one_object.block = True
                         other_object.stop()
+                        other_object.block = True
                     # 坦克与子弹相撞子弹销毁，坦克减血，子弹销毁
                     elif other_object.type == 'bullet' \
                             and one_object.type == 'tank' \
@@ -141,7 +145,7 @@ class Battlefield(BattleObject):
         # 判断战斗是否结束：只剩一个坦克或没有坦克
         if len(self.tanks) <= 1:
             self.game_over()
-            
+
         # 先根据客户端传回的指令更新战场
         if tankinfo:
             tank_id = tankinfo['id']
@@ -160,3 +164,43 @@ class Battlefield(BattleObject):
         self.update_tanks()
         self.update_bullets()
         self.collision_stat_update()
+
+    def limit_bound(self, delta=7) -> bool:
+        """
+        检测对象是否到达战场边沿，是的话将对象的阻塞状态设置为True
+        :param delta:定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
+        :return:布尔值，在战场边沿为True
+        """
+        pos = self.get_position()
+        x = pos[0]
+        y = pos[1]
+        width = self.width
+        height = self.height
+        # 定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
+        delta = 7
+        # n_x和n_y是发生碰到边界时反弹后物体的新坐标
+        n_x = x
+        n_y = y
+
+        if x <= width / 2:
+            n_x = x + delta
+
+        if (x + width / 2) >= self.battlefield.width:
+            n_x = x - delta
+
+        if y <= height / 2:
+            n_y = y + delta
+
+        if (y + height / 2) >= self.battlefield.height:
+            n_y = y - delta
+        # 发生反弹位移，说明已经碰到了边界
+        if (n_x, n_y) != (x, y):
+            # 反弹
+            self.set_position(n_x, n_y)
+            self.set_status(self.STATUS_STOP)
+
+            self.block = True
+            return True
+
+        self.block = False
+        return False
