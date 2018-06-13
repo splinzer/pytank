@@ -69,7 +69,7 @@ class Bullet(BattleObject):
         if (n_x, n_y) != (x, y):
             # 反弹
             self.set_status(self.STATUS_STOP)
-            self.die()
+            self.suicide()
             self.block = True
             return True
 

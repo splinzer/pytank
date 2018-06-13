@@ -14,11 +14,10 @@
 
         if (typeof(Worker) !== "undefined") {
             // 检测浏览器是否支持worker（以下hack用于应对chrome不支持本地worker的问题）
-            w = new Worker(URL.createObjectURL(new Blob(["(" + worker_function.toString() + ")()"], {type: 'text/javascript'})));
-            w.onmessage = function (event) {
+            window.w = new Worker(URL.createObjectURL(new Blob(["(" + worker_function.toString() + ")()"], {type: 'text/javascript'})));
+            window.w.onmessage = function (event) {
 
                 updateBattle(event.data);
-                // console.log(event.data);
             };
         }
         else {
@@ -91,7 +90,7 @@
                 // 判断目标是否已经死亡
                 if (rectObject.dead == 'True') {
                     window.battleField.remove(target_obj);
-                    // window.rectObjects.remove(target_obj); todo 删除已经销毁的对象
+
                     window.battleField.requestRenderAll();
                 }
                 // console.log(rectObject.id, left, top, angle);
@@ -134,7 +133,13 @@
 
         }
     }
-
+    // 打开战斗回放
+    function replay() {
+        // 先初始化再启动回放
+        init_battlefield();
+        // 给web workwer发送消息，启动回放
+        window.w.postMessage('replay');
+    }
 
 </script>
 <div style="width:800px;height:600px;border:1px solid gray;margin:4px auto">
@@ -142,7 +147,9 @@
     <canvas id='c' width="800px" height="600px"></canvas>
 
 </div>
-
+<div style="text-align: center">
+    <button onclick="replay()">战斗回放</button>
+</div>
 <img src="static/imgs/tank0.png" id="my-image" style="display: none;">
 
 </html>

@@ -46,7 +46,7 @@ class Battlefield(BattleObject):
                             and other_object.owner != one_object:
                         # 减去1点血
                         one_object.loss_life(20)
-                        other_object.die()
+                        other_object.suicide()
 
 
     def get_all_objects(self):
@@ -87,9 +87,12 @@ class Battlefield(BattleObject):
         return self.bullets
 
     def remove_object(self, rectObject: BattleObject):
-
-        if rectObject in self.bullets:
-            self.bullets.remove(rectObject)
+        target = []
+        if rectObject.type == 'tank':
+            target = self.tanks
+        elif rectObject.type == 'bullet':
+            target = self.bullets
+        target.remove(rectObject)
 
     def get_random_position(self, _object):
         """
@@ -142,7 +145,6 @@ class Battlefield(BattleObject):
                     if 'status' in tankinfo.keys():
                         tank.set_status(tankinfo['status'])
                     if tankinfo.get('fire', None) == 'on':
-                        # todo 创建子弹对象
                         tank.fire()
 
         # 客户端无指令时，也需要运算更新

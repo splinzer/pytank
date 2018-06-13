@@ -46,18 +46,6 @@ def open_websocket_client(url):
     # os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
 
 
-class BattleManager:
-    def __init__(self):
-        self.battlefields = []
-
-    def add_battlefield(self, bt: Battlefield):
-        self.battlefields.append(bt)
-
-    def remove_battlefield(self, bt: Battlefield):
-        if len(self.battlefields):
-            self.battlefields.remove(bt)
-
-
 def main():
     s = socket(AF_INET, SOCK_DGRAM)
     s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)

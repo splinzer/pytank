@@ -45,7 +45,10 @@ class BattleObject():
         self.direction = self.DIRECTION_UP
         # 默认速度最大
         self.velocity = self.MAX_VELOCITY
-        # 自毁延时,状态变为dead后多久删除自己，这里的值不是一个时间，而是update的次数
+        # 自毁延迟次数,表示物体状态变为dead后循环几次再销毁，这里的循环是指update被调用的次数
+        # 将要销毁的物体，我们需要一次性告知客户端某个物体已经销毁，而后为了精简服务器与客户端通信的数据长度，
+        # 服务器以后下发的数据中将不再包含已销毁物体的任何信息，
+        # 这个延时的目的是让服务器能够有时间把物体销毁的消息传给客户端
         self.countdown = 1
         # 是否已被摧毁
         self.dead = False
@@ -142,17 +145,28 @@ class BattleObject():
     def stop(self):
         self.set_status(self.STATUS_STOP)
 
-    # 自杀函数，callback是回调函数，用于销毁rectobject对象
-    # 添加callback函数对导致Manager无法序列化，报错：Can't pickle local object
-    def die(self):
+
+    def suicide(self):
+        """
+        自杀函数，物体销毁时调用该方法进行清理。
+        本来该方法中有callback参数作为回调函数，用于销毁rectobject对象，
+        由于添加callback函数会导致Manager无法序列化，报错：Can't pickle local object
+        所以暂时取消该参数
+        :return:
+        """
         # self.die_callback = callback
         self.dead = True
 
-    # 自毁函数，当self.countdown为零时触发.会自动调用，不要手动调用
     def __destroy(self):
-        # self.die_callback(self)
+        """
+        自毁函数，当self.countdown为零时触发.会自动调用，不要手动调用
+        :return:
+        """
+        # 从共享列表中清除
+        self.battlefield.remove_object(self)
+
         del self
-        # todo 坦克销毁需要从共享列表中清除
+
 
     def __del__(self):
         pass

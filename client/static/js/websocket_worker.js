@@ -1,42 +1,51 @@
 function worker_function() {
-    // all code here
+    // 用于记录战斗指令序列，用于回放战斗
+    game_record = [];
     //自动连接websocket服务器
     doConnect();
-
+    // 接收浏览器前台消息
+    self.onmessage = function (evt) {
+        // 当接收到relay消息启动战斗回放
+        if (evt.data == 'replay') {
+            replay();
+        }
+    }
 
     function doConnect() {
         websocket = new WebSocket("ws://localhost:8000/");
         websocket.onopen = function (evt) {
-            onOpen(evt);
+            onWebsocketOpen(evt);
         };
         websocket.onclose = function (evt) {
-            onClose(evt);
+            onWebsocketClose(evt);
         };
         websocket.onmessage = function (evt) {
-            onMessage(evt);
+            onWebsocketMessage(evt);
         };
         websocket.onerror = function (evt) {
-            onError(evt);
+            onWebsocketError(evt);
         };
     }
 
-    function onOpen(evt) {
+    function onWebsocketOpen(evt) {
 
     }
 
-    function onClose(evt) {
+    function onWebsocketClose(evt) {
 
     }
 
-    function onMessage(evt) {
+    function onWebsocketMessage(evt) {
         // writeToScreen(evt.data + '\n');
         console.log(evt.data);
         var data = decoder(evt.data);
         //将获取到的战场信息发给前台浏览器
         postMessage(data);
+        // 保存战斗录像
+        game_record.push(data);
     }
 
-    function onError(evt) {
+    function onWebsocketError(evt) {
         // writeToScreen('error: ' + evt.data + '\n');
         console.log('error: ' + evt.data)
         websocket.close();
@@ -61,6 +70,23 @@ function worker_function() {
         }
         return target
     }
+
+    // 该函数用于回放战斗录像
+    function replay() {
+        i = 0;
+
+        function next_commnad() {
+            if (i < game_record.length) {
+                postMessage(game_record[i]);
+            }
+            else {
+                clearInterval(s)
+            }
+            i++;
+        }
+
+        s = setInterval(next_commnad, 100);
+    }
 }
 
 // This is in case of normal worker start
@@ -69,6 +95,7 @@ function worker_function() {
 // the worker code will still execute properly
 if (window != self)
     worker_function();
+
 
 
 

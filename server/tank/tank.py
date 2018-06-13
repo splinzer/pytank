@@ -38,7 +38,7 @@ class Tank(BattleObject):
         self.life -= n
         # 当生命为0，坦克over
         if self.life <= 0:
-            self.die()
+            self.suicide()
 
     def use_one_bullet(self):
         if self.ammo != 0:
