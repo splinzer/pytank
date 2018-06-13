@@ -23,14 +23,18 @@ class Coder:
         tanks = []
         bullets = []
         barriers = []
+        battlefied = None
         for i in cls.__transfer(s):
             if i['type'] == 'tank':
                 tanks.append(dict_to_class(i))
-            if i['type'] == 'bullet':
+            elif i['type'] == 'bullet':
                 bullets.append(dict_to_class(i))
-            if i['type'] == 'barrier':
+            elif i['type'] == 'barrier':
                 barriers.append(dict_to_class(i))
-        return Battle(tanks, bullets, barriers)
+            elif i['type'] == 'battlefield':
+                battlefied = dict_to_class(i)
+
+        return Battle(tanks, bullets, barriers, battlefied)
 
     @classmethod
     def __transfer(self, s):

@@ -155,6 +155,13 @@ class GameServer:
             sleep(FRAMERATE)
 
     def sendinfo_to_client(self, s: socket, out_queue: Queue, client_list_shared):
+        """
+        从输出消息队列中读取消息并发给各个客户端
+        :param s: 主服务socket
+        :param out_queue: 输出消息队列
+        :param client_list_shared: 客户端列表共享对象
+        :return:
+        """
         print('[server]启动<战场数据伺服进程>')
         while True:
             if not out_queue.empty():

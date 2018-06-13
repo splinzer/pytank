@@ -36,6 +36,6 @@ class InfoCoder():
                     target_list += s + '|'
             target_list = target_list[:-1]
             target_list += ';'
-
-        return target_list[:-1]
-
+        # 添加胜负信息 todo 在这里添加胜负信息不是太好
+        target_list += f'type:battlefield|gameover:{bt.gameover}'
+        return target_list

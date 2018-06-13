@@ -1,30 +1,35 @@
 function worker_function() {
+    // 创建websocket
+    websocket = new WebSocket("ws://localhost:8000/");
+    websocket.onopen = function (evt) {
+        onWebsocketOpen(evt);
+    };
+    websocket.onclose = function (evt) {
+        onWebsocketClose(evt);
+    };
+    websocket.onmessage = function (evt) {
+        onWebsocketMessage(evt);
+    };
+    websocket.onerror = function (evt) {
+        onWebsocketError(evt);
+    };
     // 用于记录战斗指令序列，用于回放战斗
     game_record = [];
-    //自动连接websocket服务器
-    doConnect();
     // 接收浏览器前台消息
     self.onmessage = function (evt) {
         // 当接收到relay消息启动战斗回放
-        if (evt.data == 'replay') {
-            replay();
+        switch (evt.data) {
+            case 'replay':
+                replay();
+                break;
+            case 'close websocket':
+                closeWebsocket();
+                break;
         }
     }
 
-    function doConnect() {
-        websocket = new WebSocket("ws://localhost:8000/");
-        websocket.onopen = function (evt) {
-            onWebsocketOpen(evt);
-        };
-        websocket.onclose = function (evt) {
-            onWebsocketClose(evt);
-        };
-        websocket.onmessage = function (evt) {
-            onWebsocketMessage(evt);
-        };
-        websocket.onerror = function (evt) {
-            onWebsocketError(evt);
-        };
+    function closeWebsocket() {
+        websocket.close()
     }
 
     function onWebsocketOpen(evt) {
@@ -37,7 +42,7 @@ function worker_function() {
 
     function onWebsocketMessage(evt) {
         // writeToScreen(evt.data + '\n');
-        console.log(evt.data);
+        // console.log(evt.data);
         var data = decoder(evt.data);
         //将获取到的战场信息发给前台浏览器
         postMessage(data);

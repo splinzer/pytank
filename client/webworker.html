@@ -65,25 +65,28 @@
         var DIRECTION_RIGHT = 4;
 
         for (n in dataList) {
+
             var rectObject = dataList[n];
+            // console.log(rectObject)
+            if (rectObject.type == 'battlefield') {
+                if (rectObject.gameover == 'True') {
+                    closeWebsocket();
+                    // 显示gameover
+                    alert('游戏结束');
+                    return
+                }
+                else {
+                    continue;
+                }
+            }
             var rect_type = rectObject.type
             var left = Number(rectObject.x);
             var top = Number(rectObject.y);
             var width = Number(rectObject.width);
             var height = Number(rectObject.height);
             var direction = Number(rectObject.direction);
-            var angle = 0;
-            switch (direction) {
-                case 1:
-                    angle = -90;
-                    break;
-                case 2:
-                    angle = 90;
-                    break;
-                case 3:
-                    angle = 180;
-                    break;
-            }
+            var angle = [0, -90, 90, 180, 0][direction]
+
 
             target_obj = exists(rectObject);
             if (target_obj) {
@@ -133,12 +136,18 @@
 
         }
     }
+
     // 打开战斗回放
     function replay() {
         // 先初始化再启动回放
         init_battlefield();
         // 给web workwer发送消息，启动回放
         window.w.postMessage('replay');
+    }
+
+    // 关闭websocket
+    function closeWebsocket() {
+        window.w.postMessage('close websocket');
     }
 
 </script>

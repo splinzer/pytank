@@ -7,7 +7,8 @@ class Tank(BattleObject):
     坦克类
     """
 
-    # todo 需要修复bug:坦克在被摧毁后仍能够发子弹
+    # todo bug：坦克在被摧毁后仍能够发子弹
+    # todo bug：坦克相撞后仍能够继续移动的问题
     def __init__(self, id):
         super().__init__()
         self.id = id
