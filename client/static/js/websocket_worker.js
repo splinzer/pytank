@@ -1,30 +1,22 @@
 function worker_function() {
     // 创建websocket
     websocket = new WebSocket("ws://localhost:8000/");
-    websocket.onopen = function (evt) {
-        onWebsocketOpen(evt);
-    };
-    websocket.onclose = function (evt) {
-        onWebsocketClose(evt);
-    };
-    websocket.onmessage = function (evt) {
-        onWebsocketMessage(evt);
-    };
-    websocket.onerror = function (evt) {
-        onWebsocketError(evt);
-    };
+    websocket.onopen = onWebsocketOpen;
+    websocket.onclose = onWebsocketClose;
+    websocket.onmessage = onWebsocketMessage;
+    websocket.onerror = onWebsocketError;
     // 用于记录战斗指令序列，用于回放战斗
     game_record = [];
     // 接收浏览器前台消息
     self.onmessage = function (evt) {
+        console.log(evt.data);
         // 当接收到relay消息启动战斗回放
-        switch (evt.data) {
-            case 'replay':
-                replay();
-                break;
-            case 'close websocket':
-                closeWebsocket();
-                break;
+        if (evt.data.match(/replay:\d+/)) {
+            let framerate = Number(evt.data.split(':')[1]);
+            replay(framerate);
+        }
+        else if (evt.data == 'close websocket') {
+            closeWebsocket();
         }
     }
 
@@ -77,7 +69,8 @@ function worker_function() {
     }
 
     // 该函数用于回放战斗录像
-    function replay() {
+    // framerate:游戏回放时的战场更新频率（单位毫秒）表示每隔该时间更新一次
+    function replay(framerate) {
         i = 0;
 
         function next_commnad() {
@@ -90,8 +83,11 @@ function worker_function() {
             i++;
         }
 
-        s = setInterval(next_commnad, 100);
+        s = setInterval(next_commnad, framerate);
     }
+
+    // 设置游戏回放频率
+
 }
 
 // This is in case of normal worker start

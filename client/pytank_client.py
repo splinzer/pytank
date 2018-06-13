@@ -98,7 +98,8 @@ class Client:
                     action_str = out_queue.get()
                     self.send_to_server(action_str)
                 else:
-                    print('[client]暂无<指令>')
+                    pass
+                    # print('[client]暂无<指令>')
         os.wait()
 
     def send_to_server(self, action_str):

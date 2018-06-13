@@ -3,6 +3,16 @@
 <meta charset="utf-8"/>
 
 <title>WebSocket Test</title>
+<style>
+    #replay_btns {
+        text-align: center;
+    }
+
+    .disabledbutton {
+        pointer-events: none;
+        opacity: 0.4;
+    }
+</style>
 <script src="static/js/fabric.js"></script>
 <script src="static/js/websocket_worker.js"></script>
 <script language="javascript" type="text/javascript">
@@ -52,25 +62,27 @@
     }
 
     function updateBattle(dataList) {
-        var STATUS_READY = 1;
-        var STATUS_DEAD = 2;
-        var STATUS_STOP = 3;
-        var STATUS_MOVING = 4;
+        let STATUS_READY = 1;
+        let STATUS_DEAD = 2;
+        let STATUS_STOP = 3;
+        let STATUS_MOVING = 4;
 
-        var MAX_VELOCITY = 5;
+        let MAX_VELOCITY = 5;
 
-        var DIRECTION_UP = 1;
-        var DIRECTION_DOWN = 2;
-        var DIRECTION_LEFT = 3;
-        var DIRECTION_RIGHT = 4;
+        let DIRECTION_UP = 1;
+        let DIRECTION_DOWN = 2;
+        let DIRECTION_LEFT = 3;
+        let DIRECTION_RIGHT = 4;
 
         for (n in dataList) {
 
-            var rectObject = dataList[n];
+            let rectObject = dataList[n];
             // console.log(rectObject)
             if (rectObject.type == 'battlefield') {
                 if (rectObject.gameover == 'True') {
                     closeWebsocket();
+                    // 激活回放按钮
+                    toggleRelayButton();
                     // 显示gameover
                     alert('游戏结束');
                     return
@@ -79,13 +91,13 @@
                     continue;
                 }
             }
-            var rect_type = rectObject.type
-            var left = Number(rectObject.x);
-            var top = Number(rectObject.y);
-            var width = Number(rectObject.width);
-            var height = Number(rectObject.height);
-            var direction = Number(rectObject.direction);
-            var angle = [0, -90, 90, 180, 0][direction]
+            let rect_type = rectObject.type;
+            let left = Number(rectObject.x);
+            let top = Number(rectObject.y);
+            let width = Number(rectObject.width);
+            let height = Number(rectObject.height);
+            let direction = Number(rectObject.direction);
+            let angle = [0, -90, 90, 180, 0][direction];
 
 
             target_obj = exists(rectObject);
@@ -102,11 +114,11 @@
                 window.battleField.renderAll()
             }
             else {
-                console.log('创建新对象')
+                // console.log('创建新对象');
                 switch (rect_type) {
                     case 'tank':
-                        var imgElement = document.getElementById('my-image');
-                        var imgInstance = new fabric.Image(imgElement, {
+                        let imgElement = document.getElementById('my-image');
+                        let imgInstance = new fabric.Image(imgElement, {
                             left: left,
                             top: top,
                             angle: angle,
@@ -119,7 +131,7 @@
                         window.rectObjects.push(imgInstance);
                         break;
                     case 'bullet':
-                        var bullet = new fabric.Circle({
+                        let bullet = new fabric.Circle({
                             left: left,
                             top: top,
                             fill: 'red',
@@ -127,8 +139,8 @@
                             originX: 'center',
                             originY: 'center'
                         });
-                        bullet.ro_id = rectObject.id
-                        bullet.ro_type = rectObject.type
+                        bullet.ro_id = rectObject.id;
+                        bullet.ro_type = rectObject.type;
                         window.battleField.add(bullet);
                         window.rectObjects.push(bullet);
                 }
@@ -137,17 +149,26 @@
         }
     }
 
-    // 打开战斗回放
-    function replay() {
+    // 该函数用于回放战斗录像
+    // framerate:游戏回放时的战场更新频率（单位毫秒）表示每隔该时间更新一次
+    function replay(framerate) {
+        // 播放期间使回放按钮不可用
+        toggleRelayButton();
         // 先初始化再启动回放
         init_battlefield();
         // 给web workwer发送消息，启动回放
-        window.w.postMessage('replay');
+        window.w.postMessage('replay:' + framerate);
     }
 
     // 关闭websocket
     function closeWebsocket() {
         window.w.postMessage('close websocket');
+    }
+
+    //使战斗回放可用或不可用
+    function toggleRelayButton() {
+        let div_class = document.getElementById('replay_btns').classList;
+        div_class.toggle('disabledbutton')
     }
 
 </script>
@@ -156,8 +177,11 @@
     <canvas id='c' width="800px" height="600px"></canvas>
 
 </div>
-<div style="text-align: center">
-    <button onclick="replay()">战斗回放</button>
+<div id="replay_btns" class="disabledbutton">
+    战斗回放：
+    <button onclick="replay(100)">正常速度</button>
+    <button onclick="replay(50)">x2倍速</button>
+    <button onclick="replay(25)">x4倍速</button>
 </div>
 <img src="static/imgs/tank0.png" id="my-image" style="display: none;">
 
