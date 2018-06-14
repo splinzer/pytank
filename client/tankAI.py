@@ -236,6 +236,10 @@ class TankAI():
         near_edge, avai_direct = self.void_edge(battle)
         if near_edge:
             self.random_turn(avai_direct)
+        else:
+            pass
+            # if randint(0,10) == 5:
+            #     self.random_turn(avai_direct)
 
     def update_action(self, type, value):
         self.action.update({type: value})

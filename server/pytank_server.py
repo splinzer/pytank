@@ -37,13 +37,13 @@ BUFFER_SIZE = 2096
 class GameServer:
 
     def __init__(self):
-        s = socket(AF_INET, SOCK_DGRAM)
-        s.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-        s.bind((HOST, PORT))
+        self.sock = socket(AF_INET, SOCK_DGRAM)
+        self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+        self.sock.bind((HOST, PORT))
         # 启动websocket伺服进程
         # todo bug：websocket只能连接一个浏览器
-        websk_queue = Queue()
-        websk_p = Process(target=self.start_websocket_server, args=(websk_queue,))
+        self.websk_queue = Queue()
+        websk_p = Process(target=self.start_websocket_server)
         websk_p.daemon = True
         websk_p.start()
 
@@ -51,33 +51,54 @@ class GameServer:
         shared_memory = Manager()
 
         # 客户端地址和坦克名对应关系列表
-        client_list_shared = shared_memory.dict()
+        self.client_list_shared = shared_memory.dict()
 
         # 战场对象列表
-        battle_list_shared = shared_memory.dict()
+        self.battle_list_shared = shared_memory.dict()
 
         # 战场情报输出队列
-        out_queue = Queue()
+        self.out_queue = Queue()
         # 客户端指令输入队列
-        in_queue = Queue()
+        self.in_queue = Queue()
 
         # 开启服务主循环
         # websk_queue,out_queue接收相同的战场数据
-        main_p = Process(target=self.mainloop, args=(battle_list_shared, [in_queue], [websk_queue, out_queue]))
+        main_p = Process(target=self.mainloop)
         main_p.daemon = True
         main_p.start()
 
         # 启动战场情报下发伺服进程：将战场数据发给客户端
-        send_p = Process(target=self.sendinfo_to_client, args=(s, out_queue, client_list_shared))
+        send_p = Process(target=self.sendinfo_to_client)
         send_p.daemon = True
         send_p.start()
 
         # todo 实现多个战斗同时进行
+        # 服务端使用客户端的ip和端口号作为客户端唯一标识，每次客户端传给服务端的消息头部都加上该标识
+        # 等待获取客户端登录请求，验证通过后，按照客户端要求创建战斗并给到客户端反馈
+        '''
+        客户端登录验证过程：
+        1.客户端发出登录指令：LOGINusername|password|count
+        2.服务端提取前5个字符，判断为LOGIN动作
+        3.服务端验证username和password是否有效，无效重启验证过程，有效继续下一步
+        4.服务端创建战斗，坦克数量使用count
+        5.服务端存储战斗和客户端对应关系
+        6.服务端反馈战斗创建成功消息给客户端：ok|b209203420|t234202|t230920|t224092
+        
+        客户端指令格式：消息头####消息体####消息尾
+            - 3部分之间以4个#号分隔
+            - 消息头：代表消息类型,长度不固定
+            - 消息体：具体要传送的消息内容,长度不固定
+            - 消息尾：存储消息来源客户端的ip和端口,长度不固定
+            例如：battleinfo####{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}####127.0.0.1|48078
+        
+        '''
         while True:
-            print(battle_list_shared)
+            print(f'[server]战斗列表:{self.battle_list_shared}')
 
             # 验证用户密码
-            data, addr = s.recvfrom(BUFFER_SIZE)
+            data, addr = self.sock.recvfrom(BUFFER_SIZE)
+            # 以addr作为客户端唯一标识，形如：('127.0.0.1', 39194) ('127.0.0.1', 48078)
+            print(addr)
             data = data.decode()
 
             if data == '':
@@ -90,45 +111,57 @@ class GameServer:
                     # 按照客户端需要创建拥有指定坦克数量的战斗
                     bt, tank_id_list = self.createBattle(int(count))
                     # 战场对象存入共享对象
-                    battle_list_shared.update({bt.id: bt})
-                    print(f'[server]共享对象值：{battle_list_shared}')
+                    self.battle_list_shared.update({bt.id: bt})
+                    print(f'[server]共享对象值：{self.battle_list_shared}')
                     # 客户端地址和坦克名对应关系列表，数据如下样例：
                     # [('127.0.0.1',4957):['tank1','tank2'],
                     #  ('127.0.0.1',4958):['tank1','tank2','tank2'],
                     #  ('127.0.0.1',4959):['tank1','tank2','tank2']]
-                    client_list_shared.update({addr: tank_id_list})
-                    # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的name列表）
+                    self.client_list_shared.update({addr: tank_id_list})
+                    # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的id列表）
                     msg = 'ok|' + bt.id + '|' + '|'.join(tank_id_list)
-                    s.sendto(msg.encode(), addr)
+                    self.sock.sendto(msg.encode(), addr)
+                else:
+                    continue
 
 
             else:
                 # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
                 # print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
-                # 把客户端指令存入消息队列，有mainloop进程进行处理
-                in_queue.put(data)
+                # 把客户端指令存入消息队列，由mainloop进程进行处理
+
+                # 只接收已建立过连接的客户端数据
+                if self.is_connected(addr):
+                    self.in_queue.put(data)
+
                 sleep(FRAMERATE)
 
-    def mainloop(self, battle_list_shared, in_queues_list, out_queues_list):
+    def is_connected(self, addr: tuple):
         """
-        根据客户端传回的指令更新战场信息
-        :param battle_list_shared:所有战场共享内存对象
-        :param in_queues_list:输入指令队列列表
-        :param out_queues_list:输出指令队列列表
+        判断客户端是否已与服务器建立了连接
+        :param addr:客户端ip和端口
         :return:
         """
-        print('[server]启动<mainloop进程>')
+        return addr in self.client_list_shared
+        pass
+
+    def mainloop(self):
+        """
+        根据客户端传回的指令更新战场信息
+        :return:
+        """
+        in_queues_list = [self.in_queue]
+        out_queues_list = [self.out_queue, self.websk_queue]
 
         while True:
 
             # 需要首先将战场信息发到客户端（避免服务端和客户端都会等待阻塞）
             for out_q in out_queues_list:
-                for bt in battle_list_shared.values():
+                for bt in self.battle_list_shared.values():
                     # 将战场信息放入消息队列
                     out_q.put(bt)
 
             # 根据客户端传回来的指令对各战场进行运算，将计算结果放入out_queue队列，由sendinfo_to_client负责发送
-            # todo 客户端无指令的情况下，战场应该也能够运算并下发数据
             for in_q in in_queues_list:
 
                 if not in_q.empty():
@@ -140,9 +173,9 @@ class GameServer:
                     # 在客户端启动之初，会因收到不完整的指令导致错误，这里使用需要异常处理
 
                     # 更新对应战场的数据
-                    if tankinfo['battle_id'] in battle_list_shared.keys():
+                    if tankinfo['battle_id'] in self.battle_list_shared.keys():
                         # print(f'[server]战场数据更新<{tankinfo}>')
-                        bt = battle_list_shared[tankinfo['battle_id']]
+                        bt = self.battle_list_shared[tankinfo['battle_id']]
                         # 根据客户端传来的指令更新对应战场
                         bt.update_before_send(tankinfo)
 
@@ -150,52 +183,48 @@ class GameServer:
                         # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
                         # 详情参考python官方文档中关于包含像list dict等可变对象时的特殊处理
                         # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
-                        battle_list_shared[tankinfo['battle_id']] = bt
+                        self.battle_list_shared[tankinfo['battle_id']] = bt
 
                         # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
                         if bt.gameover and bt.gameover_sended:
-                            del battle_list_shared[tankinfo['battle_id']]
+                            del self.battle_list_shared[tankinfo['battle_id']]
 
                 else:
                     # 客户端无指令的情况
                     # 更新对应战场的数据
-                    for id in battle_list_shared.keys():
-                        bt = battle_list_shared[id]
+                    for id in self.battle_list_shared.keys():
+                        bt = self.battle_list_shared[id]
                         # 更新战场
                         bt.update_before_send()
-                        battle_list_shared[id] = bt
+                        self.battle_list_shared[id] = bt
                         # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
                         if bt.gameover and bt.gameover_sended:
-                            del battle_list_shared[id]
+                            del self.battle_list_shared[id]
             # 信息下发频率控制
             sleep(FRAMERATE)
 
-
-    def sendinfo_to_client(self, s: socket, out_queue: Queue, client_list_shared):
+    def sendinfo_to_client(self):
         """
         从输出消息队列中读取消息并发给各个客户端
-        :param s: 主服务socket
-        :param out_queue: 输出消息队列
-        :param client_list_shared: 客户端列表共享对象
         :return:
         """
         print('[server]启动<战场数据伺服进程>')
         while True:
-            if not out_queue.empty():
-                data = out_queue.get()
+            if not self.out_queue.empty():
+                data = self.out_queue.get()
                 coder = InfoCoder()
                 data = coder.encoder(data)
-                for addr in client_list_shared.keys():
+                for addr in self.client_list_shared.keys():
                     # print('[server]下发<战场数据>给<{}>:{}'.format(addr, data))
                     # 传之前先对数据进行压缩
                     data = zlib.compress(data.encode())
                     # 将数据发送给客户端
-                    s.sendto(data, addr)
+                    self.sock.sendto(data, addr)
 
             sleep(FRAMERATE)
 
-    def start_websocket_server(self, queue: Queue):
-        SimpleBroadServer.queue = queue
+    def start_websocket_server(self):
+        SimpleBroadServer.queue = self.websk_queue
         SimpleBroadServer.framerate = FRAMERATE
         server = SimpleWebSocketServer(HOST, WEBSOCKET_PORT, SimpleBroadServer)
         self.open_websocket_client(WEBSOCKET_CLIENT_URL)
