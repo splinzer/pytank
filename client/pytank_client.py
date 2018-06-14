@@ -21,7 +21,7 @@ PORT = 9000
 # webscoket服务器端口
 WEBSOCKET_PORT = 8000
 # 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = '/client/websocket.html'
+WEBSOCKET_CLIENT_URL = '/client/webworker.html'
 # 坦克AI数量有效范围
 ALLOW_COUNT = (2, 5)
 # 缓冲区大小
@@ -79,7 +79,7 @@ class Client:
             data = self.s.recv(BUFFER_SIZE)
             # 使用前解压数据
             data = zlib.decompress(data)
-            # print('[client]收到<战场数据>:', data)
+            print('[client]收到<战场数据>:', data)
             data = data.decode()
             # 判断游戏结束
             if data.rfind('gameover:True') != -1:

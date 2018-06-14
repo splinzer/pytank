@@ -26,7 +26,7 @@ class Battlefield(BattleObject):
         self.bullets = []
         # 标识战斗是否结束
         self.gameover = False
-        # 用于标识战斗结束消息是否已经发给客户端了
+        # 用于标识战斗结束消息是否已经发给客户端了（用于确保客户端收到战斗结束消息，否则此时服务器断开连接，客户端只能死等）
         self.gameover_sended = False
 
     def game_over(self):
@@ -57,7 +57,7 @@ class Battlefield(BattleObject):
                             and one_object.type == 'tank' \
                             and other_object.owner != one_object:
                         # 减去1点血
-                        one_object.loss_life(20)
+                        one_object.loss_life(100)
                         other_object.suicide()
 
     def get_all_objects(self):
