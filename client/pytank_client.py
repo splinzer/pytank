@@ -103,6 +103,7 @@ class Client:
             data = data.decode()
 
             # 将数据转发给websocket
+            print(self.websk_queue.qsize())
             self.websk_queue.put(data)
 
             # 判断游戏结束

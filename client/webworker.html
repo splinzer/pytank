@@ -78,7 +78,7 @@
                     // 显示gameover
                     console.log('游戏结束');
                     // 在战场上显示gameover
-                    var text = new fabric.Text('GameOver!',
+                    let text = new fabric.Text('GameOver!',
                         {
                             left: 350,
                             top: 300,
@@ -102,6 +102,7 @@
             let height = Number(rectObject.height);
             let direction = Number(rectObject.direction);
             let angle = [0, -90, 90, 180, 0][direction];
+            let life = Number(rectObject.life);
 
 
             target_obj = exists(rectObject);
@@ -113,7 +114,18 @@
                     window.battleField.requestRenderAll();
                 }
                 // console.log(rectObject.id, left, top, angle);
-                window.rectObjects[i].set({'left': left, 'top': top, 'angle': angle});
+
+                if (target_obj.type == 'tank') {
+                    target_obj.item(0).set({'angle': angle});
+                    target_obj.set({'left': left, 'top': top});
+                }
+                else {
+
+                    target_obj.set({'left': left, 'top': top, 'angle': angle});
+
+                }
+
+
                 // window.battleField.renderAll()
                 window.battleField.renderAll()
             }
@@ -123,16 +135,42 @@
                     case 'tank':
                         let imgElement = document.getElementById('my-image');
                         let imgInstance = new fabric.Image(imgElement, {
-                            left: left,
-                            top: top,
                             angle: angle,
                             originX: 'center',
                             originY: 'center'
                         });
-                        imgInstance.ro_id = rectObject.id;
-                        imgInstance.ro_type = rectObject.type;
-                        window.battleField.add(imgInstance);
-                        window.rectObjects.push(imgInstance);
+
+                        let rect = new fabric.Rect({
+                            top: -width / 2 - 2,
+                            left: -width / 2,
+                            width: width * life / 100,
+                            height: 2,
+                            fill: 'red',
+                            originX: 'left',
+                            originY: 'center'
+                        });
+                        let fontSize = 10;
+                        let text = new fabric.Text(rectObject.id, {
+                            top: width / 2 + fontSize,
+                            fontSize: fontSize,
+                            originX: 'center',
+                            originY: 'center'
+                        });
+
+
+                        let group = new fabric.Group([imgInstance, rect, text], {
+                            left: left,
+                            top: top,
+                            originX: 'center',
+                            originY: 'center'
+                        });
+
+                        group.ro_id = rectObject.id;
+                        group.ro_type = rectObject.type;
+                        window.battleField.add(group);
+                        window.rectObjects.push(group);
+
+
                         break;
                     case 'bullet':
                         let bullet = new fabric.Circle({

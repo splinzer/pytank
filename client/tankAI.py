@@ -75,6 +75,7 @@ class TankAI():
 
     def __init__(self, in_queue, out_queue, battle_id, tank_id):
         print('[tankAI]启动')
+        self.name = '无名氏'
         self.battle_id = battle_id
         self.id = tank_id
         self.in_queue = in_queue

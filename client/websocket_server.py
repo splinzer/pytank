@@ -35,4 +35,4 @@ class SimpleBroadServer(WebSocket):
             # coder = InfoCoder()
             # data = coder.encoder(data)
             self.sendMessage(data)
-            sleep(self.framerate)
+            sleep(0.05)
