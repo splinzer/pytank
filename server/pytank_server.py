@@ -5,11 +5,9 @@
 from server.tank.tank import *
 from server.tank.battlefield import *
 from server.tank.barrier import Barrier
-from server.websocket_server import SimpleBroadServer, SimpleWebSocketServer
 from multiprocessing import Queue, Process, Manager
 from time import sleep, time
 import os
-import subprocess
 from select import *
 from socket import *
 from random import randint
@@ -19,14 +17,10 @@ import zlib
 
 # 战场更新频率
 FRAMERATE = 0.1
-# webscoket服务器host
+# 服务器ip
 HOST = ''
 # socket服务端口
 PORT = 9000
-# webscoket服务器端口
-WEBSOCKET_PORT = 8000
-# 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = '/server/webworker.html'
 # 缓冲区大小
 BUFFER_SIZE = 2096
 
@@ -39,12 +33,6 @@ class GameServer:
         self.sock = socket(AF_INET, SOCK_DGRAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.sock.bind((HOST, PORT))
-        # 启动websocket伺服进程
-        # todo bug：websocket只能连接一个浏览器
-        self.websk_queue = Queue()
-        # websk_p = Process(target=self.start_websocket_server)
-        # websk_p.daemon = True
-        # websk_p.start()
 
         # 创建进程内存共享对象
         shared_memory = Manager()
@@ -163,57 +151,55 @@ class GameServer:
         根据客户端传回的指令更新战场信息
         :return:
         """
-        # todo 多战斗同时进行是的运行卡顿问题
+        # todo 多战斗同时进行时的卡顿问题
         in_queues_list = [self.in_queue]
-        out_queues_list = [self.out_queue, self.websk_queue]
+        out_queues_list = [self.out_queue]
 
         while True:
 
             # 需要首先将战场信息放入输出队列（避免服务端和客户端都会等待阻塞）
-            for out_q in out_queues_list:
-                for bt in self.bid_to_battle_shared.values():
-                    # 将战场信息放入消息队列
-                    out_q.put(bt)
+
+            for bt in self.bid_to_battle_shared.values():
+                # 将战场信息放入消息队列
+                self.out_queue.put(bt)
 
             # 根据客户端传回来的指令对各战场进行运算，由sendinfo_to_client负责从输出队列中提取战场信息并发送给客户端
-            for in_q in in_queues_list:
+            if not self.in_queue.empty():
+                # 取出指令，示例格式："{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}"
+                battleinfo = self.in_queue.get()
+                # 将序列化的指令恢复成tank对象
+                tankinfo = json.loads(battleinfo)
+                # 在客户端启动之初，会因收到不完整的指令导致错误，这里使用需要异常处理
 
-                if not in_q.empty():
-                    # 取出指令，示例格式："{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}"
-                    battleinfo = in_q.get()
-                    # 将序列化的指令恢复成tank对象
-                    tankinfo = json.loads(battleinfo)
-                    # 在客户端启动之初，会因收到不完整的指令导致错误，这里使用需要异常处理
+                # 更新对应战场的数据
+                if tankinfo['battle_id'] in self.bid_to_battle_shared.keys():
+                    # print(f'[server]战场数据更新<{tankinfo}>')
+                    bt = self.bid_to_battle_shared[tankinfo['battle_id']]
+                    # 根据客户端传来的指令更新对应战场
+                    bt.update_before_send(tankinfo)
 
-                    # 更新对应战场的数据
-                    if tankinfo['battle_id'] in self.bid_to_battle_shared.keys():
-                        # print(f'[server]战场数据更新<{tankinfo}>')
-                        bt = self.bid_to_battle_shared[tankinfo['battle_id']]
-                        # 根据客户端传来的指令更新对应战场
-                        bt.update_before_send(tankinfo)
+                    # 注意，这行代码看似多余，其实是为了避免一个Manager的bug
+                    # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
+                    # 详情参考python官方文档中关于包含像list dict等可变对象时的特殊处理
+                    # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
+                    self.bid_to_battle_shared[tankinfo['battle_id']] = bt
 
-                        # 注意，这行代码看似多余，其实是为了避免一个Manager的bug
-                        # 这个bug是说Manager对象无法监测到它引用的可变对象值的修改，需要通过调用__setitem__方法来让它获得通知
-                        # 详情参考python官方文档中关于包含像list dict等可变对象时的特殊处理
-                        # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
-                        self.bid_to_battle_shared[tankinfo['battle_id']] = bt
+                    # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
 
-                        # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
+                    if bt.gameover and bt.gameover_sended:
+                        self.close_battle(bt.id)
 
-                        if bt.gameover and bt.gameover_sended:
-                            self.close_battle(bt.id)
-
-                else:
-                    # 客户端无指令的情况
-                    # 更新对应战场的数据
-                    for id in self.bid_to_battle_shared.keys():
-                        bt = self.bid_to_battle_shared[id]
-                        # 更新战场
-                        bt.update_before_send()
-                        self.bid_to_battle_shared[id] = bt
-                        # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
-                        if bt.gameover and bt.gameover_sended:
-                            self.close_battle(bt.id)
+            else:
+                # 客户端无指令的情况
+                # 更新对应战场的数据
+                for id in self.bid_to_battle_shared.keys():
+                    bt = self.bid_to_battle_shared[id]
+                    # 更新战场
+                    bt.update_before_send()
+                    self.bid_to_battle_shared[id] = bt
+                    # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
+                    if bt.gameover and bt.gameover_sended:
+                        self.close_battle(bt.id)
             # 信息下发频率控制
             sleep(FRAMERATE)
 
@@ -244,31 +230,6 @@ class GameServer:
                 #     self.sock.sendto(tank_info, addr)
 
             sleep(FRAMERATE)
-
-    def start_websocket_server(self):
-        """
-        启动websocket服务
-        :return:
-        """
-        SimpleBroadServer.queue = self.websk_queue
-        # 设定websocket服务下发数据的频率
-        SimpleBroadServer.framerate = FRAMERATE
-        server = SimpleWebSocketServer(HOST, WEBSOCKET_PORT, SimpleBroadServer)
-        # 打开浏览器观看战斗
-        self.open_websocket_client(WEBSOCKET_CLIENT_URL)
-        server.serveforever()
-
-    def open_websocket_client(self, url):
-        """
-        在本地浏览其中观看战斗
-        todo 该功能需要移至客户端
-        :param url:
-        :return:
-        """
-        path = os.getcwd() + url
-        subprocess.Popen(['chromium-browser', path])
-        print('[server]打开<本地浏览器>')
-        # os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
 
     def get_random_position(self, battle_size: tuple, tank_size: tuple):
         width = battle_size[0]
