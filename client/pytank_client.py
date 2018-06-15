@@ -5,12 +5,15 @@
 from socket import *
 from time import sleep
 from multiprocessing import Process, Queue
+from client.websocket_server import SimpleBroadServer, SimpleWebSocketServer
 from importlib import import_module
 from pathlib import Path
 from client.clientcoder import Coder
 import json
 import zlib
 import sys
+import os
+import subprocess
 
 # 战场更新频率
 FRAMERATE = 0.05
@@ -21,7 +24,7 @@ PORT = 9000
 # webscoket服务器端口
 WEBSOCKET_PORT = 8000
 # 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = '/client/webworker.html'
+WEBSOCKET_CLIENT_URL = './webworker.html'
 # 坦克AI数量有效范围
 ALLOW_COUNT = (2, 5)
 # 缓冲区大小
@@ -38,11 +41,21 @@ class Client:
         self.in_queues = []
         # 战场上所有坦克AI的输出数据队列
         self.out_queues = []
+
+        # 设置websocket端口为一个系统分配的随机端口
+        self.websocket_port = self.get_free_tcp_port()
+
+        # 启动websocket伺服进程
+        self.websk_queue = Queue()
+        websk_p = Process(target=self.start_websocket_server)
+        websk_p.daemon = True
+        websk_p.start()
+
         self.s = None
         self.connect()
 
-    def game_over(self):
-        print('游戏结束')
+    def game_over(self, quit_info='游戏结束'):
+        print(quit_info)
         sys.exit(0)
 
     def connect(self):
@@ -77,13 +90,19 @@ class Client:
         while True:
             # 接收服务端战场信息
             data = self.s.recv(BUFFER_SIZE)
+
             # 使用前解压数据
             data = zlib.decompress(data)
             print('[client]收到<战场数据>:', data)
             data = data.decode()
+
+            # 将数据转发给websocket
+            self.websk_queue.put(data)
+
             # 判断游戏结束
             if data.rfind('gameover:True') != -1:
-                # todo 显示游戏结果
+                # 等待2秒，确保浏览器收到了游戏结束信号
+                sleep(2)
                 self.game_over()
                 break
 
@@ -103,6 +122,45 @@ class Client:
                     # print('[client]暂无<指令>')
         os.wait()
 
+    def start_websocket_server(self):
+        """
+        启动websocket服务
+        :return:
+        """
+        SimpleBroadServer.queue = self.websk_queue
+        # 设定websocket服务下发数据的频率
+        SimpleBroadServer.framerate = FRAMERATE
+
+        server = SimpleWebSocketServer(HOST, self.websocket_port, SimpleBroadServer)
+        # 打开浏览器观看战斗
+        self.open_websocket_client(WEBSOCKET_CLIENT_URL, self.websocket_port)
+        server.serveforever()
+
+    def get_free_tcp_port(self):
+        """
+        获得一个系统分配的可用端口号
+        :return:
+        """
+        tcp = socket(AF_INET, SOCK_STREAM)
+        tcp.bind(('', 0))
+        addr, port = tcp.getsockname()
+        tcp.close()
+        return port
+
+    def open_websocket_client(self, url, hash):
+        """
+        在本地浏览其中观看战斗
+        todo 该功能需要移至客户端
+        :param url:本地地址
+        :param hash:地址后#号后的内容，用于给页面传参
+        :return:
+        """
+        # path = os.getcwd() + url + '#' + str(hash)
+        p = Path(Path.cwd(),url).as_uri() + '#' + str(hash)
+        subprocess.Popen(['chromium-browser', p])
+        print('[server]打开<本地浏览器>')
+        # os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
+
     def send_to_server(self, action_str):
         # 使用json对指令进行序列化处理
         action_json = json.dumps(action_str)
@@ -112,7 +170,7 @@ class Client:
 
     def check_tankAIs(self, tank_count):
         if ALLOW_COUNT[0] > tank_count > ALLOW_COUNT[1]:
-            sys.exit(f'[client]警告<坦克AI数量必须在{ALLOW_COUNT}个内>')
+            self.game_over(f'[client]警告<坦克AI数量必须在{ALLOW_COUNT}个内>')
 
     def init_tanks_process(self):
         """

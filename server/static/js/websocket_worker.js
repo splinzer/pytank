@@ -54,13 +54,13 @@ function worker_function() {
     id:t2|width:20|height:20|x:255|y:50|direction:2|velocity:5|life:100|oil:100|weapon:0|status:3
      */
     function decoder(str) {
-        var target = []
-        var groups = str.split(';')
+        var target = [];
+        var groups = str.split(';');
         for (i = 0; i < groups.length; i++) {
-            var list = groups[i].split('|')
-            var row = {}
+            var list = groups[i].split('|');
+            var row = {};
             for (j = 0; j < list.length; j++) {
-                var pair = list[j].split(':')
+                var pair = list[j].split(':');
                 row[pair[0]] = pair[1]
             }
             target.push(row)

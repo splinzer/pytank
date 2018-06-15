@@ -23,8 +23,11 @@
         init_battlefield();
 
         if (typeof(Worker) !== "undefined") {
+            // 从地址栏获得端口号
+            let port = parseInt(window.location.hash.substr(1));
             // 检测浏览器是否支持worker（以下hack用于应对chrome不支持本地worker的问题）
-            window.w = new Worker(URL.createObjectURL(new Blob(["(" + worker_function.toString() + ")()"], {type: 'text/javascript'})));
+            window.w = new Worker(URL.createObjectURL(new Blob(["(" + worker_function.toString() + ")(" + port + ")"],
+                {type: 'text/javascript'})));
             window.w.onmessage = function (event) {
 
                 updateBattle(event.data);

@@ -1,6 +1,6 @@
-function worker_function() {
+function worker_function(port) {
     // 创建websocket
-    websocket = new WebSocket("ws://localhost:8000/");
+    websocket = new WebSocket("ws://localhost:" + port);
     websocket.onopen = onWebsocketOpen;
     websocket.onclose = onWebsocketClose;
     websocket.onmessage = onWebsocketMessage;
@@ -35,7 +35,7 @@ function worker_function() {
     function onWebsocketMessage(evt) {
         // writeToScreen(evt.data + '\n');
         console.log(evt.data);
-        var data = decoder(evt.data);
+        let data = decoder(evt.data);
         //将获取到的战场信息发给前台浏览器
         postMessage(data);
         // 保存战斗录像
@@ -54,13 +54,13 @@ function worker_function() {
     id:t2|width:20|height:20|x:255|y:50|direction:2|velocity:5|life:100|oil:100|weapon:0|status:3
      */
     function decoder(str) {
-        var target = []
-        var groups = str.split(';')
+        let target = [];
+        let groups = str.split(';');
         for (i = 0; i < groups.length; i++) {
-            var list = groups[i].split('|')
-            var row = {}
+            let list = groups[i].split('|');
+            let row = {};
             for (j = 0; j < list.length; j++) {
-                var pair = list[j].split(':')
+                let pair = list[j].split(':');
                 row[pair[0]] = pair[1]
             }
             target.push(row)
@@ -71,7 +71,7 @@ function worker_function() {
     // 该函数用于回放战斗录像
     // framerate:游戏回放时的战场更新频率（单位毫秒）表示每隔该时间更新一次
     function replay(framerate) {
-        i = 0;
+        let i = 0;
 
         function next_commnad() {
             if (i < game_record.length) {

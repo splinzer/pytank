@@ -39,6 +39,5 @@ class InfoCoder():
         # 添加胜负信息 todo 在这里添加胜负信息不是太好
         target_list += f'id:{bt.id}|type:battlefield|gameover:{bt.gameover}'
         # 标记战斗结束消息已经发给客户端
-        if bt.gameover:
-            bt.gameover_sended = True
+        bt.gameover_sended = True
         return target_list

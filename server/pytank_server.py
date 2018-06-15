@@ -42,9 +42,9 @@ class GameServer:
         # 启动websocket伺服进程
         # todo bug：websocket只能连接一个浏览器
         self.websk_queue = Queue()
-        websk_p = Process(target=self.start_websocket_server)
-        websk_p.daemon = True
-        websk_p.start()
+        # websk_p = Process(target=self.start_websocket_server)
+        # websk_p.daemon = True
+        # websk_p.start()
 
         # 创建进程内存共享对象
         shared_memory = Manager()
@@ -163,6 +163,7 @@ class GameServer:
         根据客户端传回的指令更新战场信息
         :return:
         """
+        # todo 多战斗同时进行是的运行卡顿问题
         in_queues_list = [self.in_queue]
         out_queues_list = [self.out_queue, self.websk_queue]
 
@@ -198,6 +199,7 @@ class GameServer:
                         self.bid_to_battle_shared[tankinfo['battle_id']] = bt
 
                         # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
+
                         if bt.gameover and bt.gameover_sended:
                             self.close_battle(bt.id)
 
