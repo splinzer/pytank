@@ -4,6 +4,7 @@
 # @time   : 2018 下午5:52
 from server.tank.barrier import Barrier
 from server.tank.tank import *
+from time import  sleep
 import json
 
 

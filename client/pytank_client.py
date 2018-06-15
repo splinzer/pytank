@@ -17,9 +17,9 @@ import subprocess
 
 # 战场更新频率
 FRAMERATE = 0.05
-# webscoket服务器host
-HOST = ''
-# socket服务端口
+# 服务器ip
+HOST = '176.234.96.91'
+# 服务端端口
 PORT = 9000
 # webscoket服务器端口
 WEBSOCKET_PORT = 8000
@@ -51,16 +51,19 @@ class Client:
         websk_p.daemon = True
         websk_p.start()
 
-        self.s = None
-        self.connect()
+        self.s = socket(AF_INET, SOCK_DGRAM)
+        self.s.settimeout(3)
+        self.s.connect((HOST, PORT))
+        self.main()
 
     def game_over(self, quit_info='游戏结束'):
         print(quit_info)
+        # 发送游戏结束回执
+        self.s.send(b'GAMEOVER')
         sys.exit(0)
 
-    def connect(self):
-        self.s = socket(AF_INET, SOCK_DGRAM)
-        self.s.connect((HOST, PORT))
+    def main(self):
+
         # 登录验证
         while True:
             # 导入坦克AI程序
@@ -89,11 +92,14 @@ class Client:
         # 主循环
         while True:
             # 接收服务端战场信息
-            data = self.s.recv(BUFFER_SIZE)
+            try:
+                data = self.s.recv(BUFFER_SIZE)
+            except timeout:
+                self.game_over('等待服务器数据超时')
 
             # 使用前解压数据
             data = zlib.decompress(data)
-            print('[client]收到<战场数据>:', data)
+            # print('[client]收到<战场数据>:', data)
             data = data.decode()
 
             # 将数据转发给websocket
@@ -130,8 +136,8 @@ class Client:
         SimpleBroadServer.queue = self.websk_queue
         # 设定websocket服务下发数据的频率
         SimpleBroadServer.framerate = FRAMERATE
-
-        server = SimpleWebSocketServer(HOST, self.websocket_port, SimpleBroadServer)
+        # 在本地启动websocket
+        server = SimpleWebSocketServer('localhost', self.websocket_port, SimpleBroadServer)
         # 打开浏览器观看战斗
         self.open_websocket_client(WEBSOCKET_CLIENT_URL, self.websocket_port)
         server.serveforever()
@@ -150,7 +156,6 @@ class Client:
     def open_websocket_client(self, url, hash):
         """
         在本地浏览其中观看战斗
-        todo 该功能需要移至客户端
         :param url:本地地址
         :param hash:地址后#号后的内容，用于给页面传参
         :return:

@@ -16,10 +16,10 @@ import json
 import zlib
 
 # 战场更新频率
-FRAMERATE = 0.1
-# 服务器ip
-HOST = ''
-# socket服务端口
+FRAMERATE = 0.05
+# 服务ip
+HOST = '176.234.96.91'
+# 服务端口
 PORT = 9000
 # 缓冲区大小
 BUFFER_SIZE = 2096
@@ -50,15 +50,17 @@ class GameServer:
         # 客户端指令输入队列
         self.in_queue = Queue()
 
-        # 开启服务主循环
+        # 该进程解析客户端传回的指令，并更新战场信息
         main_p = Process(target=self.mainloop)
         main_p.daemon = True
         main_p.start()
 
-        # 启动战场情报下发伺服进程：将战场数据发给客户端
+        # 该进程将战场数据发给客户端
         send_p = Process(target=self.sendinfo_to_client)
         send_p.daemon = True
         send_p.start()
+
+
 
         # todo 实现多个战斗同时进行
         # 服务端使用客户端的ip和端口号作为客户端唯一标识，每次客户端传给服务端的消息头部都加上该标识
@@ -72,16 +74,9 @@ class GameServer:
         5.服务端存储战斗和客户端对应关系
         6.服务端反馈战斗创建成功消息给客户端：ok|b209203420|t234202|t230920|t224092
         
-        客户端指令格式：消息头####消息体####消息尾
-            - 3部分之间以4个#号分隔
-            - 消息头：代表消息类型,长度不固定
-            - 消息体：具体要传送的消息内容,长度不固定
-            - 消息尾：存储消息来源客户端的ip和端口,长度不固定
-            例如：battleinfo####{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}####127.0.0.1|48078
-        
         '''
         while True:
-            print(f'[server]战场字典:{self.bid_to_battle_shared}')
+            # print(f'[server]战场字典:{self.bid_to_battle_shared}')
             print(f'[server]客户端字典:{self.bid_to_addr_shared}')
             # 验证用户密码
             data, addr = self.sock.recvfrom(BUFFER_SIZE)
@@ -111,6 +106,10 @@ class GameServer:
                 else:
                     continue
 
+            elif data[0:8] == 'GAMEOVER':
+                for _bid, _addr in self.bid_to_addr_shared.items():
+                    if addr == addr:
+                        self.close_battle(_bid)
 
             else:
                 # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
@@ -184,10 +183,6 @@ class GameServer:
                     # https://docs.python.org/3.6/library/multiprocessing.html?highlight=multiprocess#proxy-objects
                     self.bid_to_battle_shared[tankinfo['battle_id']] = bt
 
-                    # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
-
-                    if bt.gameover and bt.gameover_sended:
-                        self.close_battle(bt.id)
 
             else:
                 # 客户端无指令的情况
@@ -197,9 +192,7 @@ class GameServer:
                     # 更新战场
                     bt.update_before_send()
                     self.bid_to_battle_shared[id] = bt
-                    # 如果战斗已经结束且已通知客户端，则从战斗列表中删除该战斗对象
-                    if bt.gameover and bt.gameover_sended:
-                        self.close_battle(bt.id)
+
             # 信息下发频率控制
             sleep(FRAMERATE)
 
