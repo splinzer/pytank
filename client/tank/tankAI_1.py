@@ -62,7 +62,10 @@ class AI(TankAI):
         内置初始化方法，系统只调用一次，可以用于在on_update前做一些准备工作
         :return:
         """
-        self.start_move(self.DIRECTION_RIGHT, 5)
+        # 通过以下方式设置坦克的名字，这个名字会显示到战场上（如不设置，坦克默认名字是”无名氏“）
+        self.action.update({'name': 'tom'})
+        # 向右侧移动
+        self.start_move(self.DIRECTION_RIGHT)
 
     def on_update(self, battle):
         """
@@ -92,8 +95,6 @@ class AI(TankAI):
         # for bullet in bullets:
         #     # 躲避子弹
         #     pass
-
-
 
     # 反弹
     def is_nearby(self, tank):

@@ -83,7 +83,8 @@ class TankAI():
         # 这里通过tank_id和battle_id为action签名，以便在服务端识别
         # 指令示例：{'id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
         self.action = {'id': self.id,
-                       'battle_id': self.battle_id}
+                       'battle_id': self.battle_id,
+                       'name':self.name}
         last_action = self.action.copy()
         self.on_start()
         while True:
@@ -98,6 +99,7 @@ class TankAI():
             # 程序运行之初self.action有可能为空
             if self.action:
                 if last_action != self.action:
+                    print('action',self.action)
                     # 将本次update产生的指令放入输出队列
                     self.out_queue.put(self.action)
                     # 记录本次action
@@ -206,6 +208,7 @@ class TankAI():
             flag = True
             directions = directions - {self.DIRECTION_LEFT}
         # 靠近右侧边界
+        print(x + width / 2 + delta,battle.width)
         if (x + width / 2 + delta) >= battle.width:
             flag = True
             directions = directions - {self.DIRECTION_RIGHT}

@@ -99,7 +99,7 @@ class Client:
 
             # 使用前解压数据
             data = zlib.decompress(data)
-            # print('[client]收到<战场数据>:', data)
+            print('[client]收到<战场数据>:', data)
             data = data.decode()
 
             # 将数据转发给websocket

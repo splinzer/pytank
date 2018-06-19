@@ -29,6 +29,9 @@ class Tank(BattleObject):
         else:
             return False
 
+    def set_name(self, name):
+        self.name = name
+
     def loss_life(self, n):
         """
         减去n点血，坦克被击中时使用该方法减血
@@ -65,7 +68,6 @@ class Tank(BattleObject):
     def fire(self):
         # 有弹药且坦克生存时才能射击
         if not self.is_bullet_empty() and not self.dead:
-
             bullet = Bullet(owner_id=self.id, battlefield=self.battlefield, owner=self)
             # bullet.set_position(*self.get_center())
             #
@@ -93,7 +95,7 @@ class Tank(BattleObject):
 
         if x <= width / 2:
             n_x = x + delta
-
+        print(x + width / 2, self.battlefield.width)
         if (x + width / 2) >= self.battlefield.width:
             n_x = x - delta
 

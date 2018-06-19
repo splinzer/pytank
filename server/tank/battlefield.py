@@ -148,6 +148,7 @@ class Battlefield(BattleObject):
             self.game_over()
 
         # 先根据客户端传回的指令更新战场
+        # print('tankinfo', tankinfo)
         if tankinfo:
             tank_id = tankinfo['id']
             # 当前版本每次只能接收一个坦克的更新信息，所有每次只更新一个坦克
@@ -160,6 +161,8 @@ class Battlefield(BattleObject):
                         tank.set_status(tankinfo['status'])
                     if tankinfo.get('fire', None) == 'on':
                         tank.fire()
+                    if 'name' in tankinfo.keys():
+                        tank.set_name(tankinfo['name'])
 
         # 客户端无指令时，也需要运算更新
         self.update_tanks()
