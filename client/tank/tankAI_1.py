@@ -20,24 +20,24 @@ class AI(TankAI):
                │
                │
                │ （坦克对象列表）
-               ├───tanks─────┬───tank─┬───id（唯一编号）
-               │                      ├───type（物体类型，共2种：tank、bullet）
-               │                      ├───width（坦克高度）
-               │                      ├───height（坦克高度）
-               │                      ├───x（x坐标）
-               │                      ├───y（y坐标）
-               │                      ├───status（当前状态，共3种：STATUS_DEAD、STATUS_STOP、STATUS_MOVING）
-               │                      ├───block（为True表示当前被阻挡了，可能碰到了障碍物或碰到了战场边界）
-               │                      ├───life（剩余血量）
-               │                      ├───ammo(剩余弹药）
-               │                      ├───oil（剩余油量）
+               ├───tanks[0]─┬───id（唯一编号）
+               │            ├───type（物体类型，共2种：tank、bullet）
+               │            ├───width（坦克高度）
+               │            ├───height（坦克高度）
+               │            ├───x（x坐标）
+               │            ├───y（y坐标）
+               │            ├───status（当前状态，共3种：STATUS_DEAD、STATUS_STOP、STATUS_MOVING）
+               │            ├───block（为True表示当前被阻挡了，可能碰到了障碍物或碰到了战场边界）
+               │            ├───life（剩余血量）
+               │            ├───ammo(剩余弹药）
+               │            ├───oil（剩余油量）
                │
                │  （子弹对象列表）
-               ├───bullets───┬───tank─┬───id（唯一编号）
-               │                      ├───type（物体类型，共2种：tank、bullet）
-               │                      ├───x（x坐标）
-               │                      ├───y（y坐标）
-               │                      ├───owner_id（发射该子弹的坦克id）
+               ├───bullets[0]─┬───id（唯一编号）
+               │              ├───type（物体类型，共2种：tank、bullet）
+               │              ├───x（x坐标）
+               │              ├───y（y坐标）
+               │              ├───owner_id（发射该子弹的坦克id）
                └
 
 
@@ -63,57 +63,21 @@ class AI(TankAI):
         :return:
         """
         # 通过以下方式设置坦克的名字，这个名字会显示到战场上（如不设置，坦克默认名字是”无名氏“）
-        self._action.update({'name': 'tom'})
+        self.set_name('Tom')
         # 向右侧移动
         self.start_move(self.DIRECTION_RIGHT)
 
     def on_update(self, battle):
         """
         内置方法，该方法会被循环调用，请在该方法中实现tank的控制逻辑
-        :param battle: 战场对象，通过该对象可以获得关于战场的一切信息，包括：所有坦克、障碍物、子弹的数据
+        :param battle: 战场对象，通过该对象可以获得关于战场的一切信息，包括：所有坦克、子弹的信息
         :return: 无
         """
         tanks = battle.tanks
-        barriers = battle.barriers
         bullets = battle.bullets
 
-        # print('tankAI_1:', tanks)
-        # print('tankAI_1:', tanks[0])
 
         self.random_move(battle)
         self.random_fire()
-        # for tank in tanks:
-        #     # 如探测到敌方坦克进入攻击范围，发起攻击
-        #     direction = self.is_nearby(tank)
-        #     if direction and tank == self.mytank:
-        #         self.fire(weapon=self.WEAPON_1)
-        #
-        # for barrier in barriers:
-        #     # 蔽开障碍物
-        #     pass
-        #
-        # for bullet in bullets:
-        #     # 躲避子弹
-        #     pass
 
-    # 反弹
-    def is_nearby(self, tank):
-        """
-        示例方法：用于判断敌方坦克与我方坦克在x轴或y轴上是否比较接近
-        :param tank: 敌方坦克对象
-        :return: 发现满足条件的敌方坦克，则返回敌方坦克的方位，否则返回False
-        """
-        direction = self.DIRECTION_RIGHT
-        if abs(self.mytank.x - tank.x) < 10 or abs(self.mytank.y - tank.y) < 10:
-            # 判断敌方坦克位于我方坦克的方位
-            if tank.x >= self.mytank.x:
-                direction = self.DIRECTION_RIGHT
-            elif tank.x < self.mytank.x:
-                direction = self.DIRECTION_LEFT
-            elif tank.y >= self.mytank.y:
-                direction = self.DIRECTION_DOWN
-            elif tank.y < self.mytank.y:
-                direction = self.DIRECTION_UP
-            return direction
-        else:
-            return False
+

@@ -16,7 +16,7 @@ import os
 import subprocess
 
 # 战场更新频率
-FRAMERATE = 0.05
+FRAMERATE = 0.1
 # 服务器ip
 HOST = '176.234.96.91'
 # 服务端端口
@@ -57,7 +57,7 @@ class Client:
         self.main()
 
     def game_over(self, quit_info='游戏结束'):
-        print(quit_info)
+        # print(quit_info)
         # 发送游戏结束回执
         self.s.send(b'GAMEOVER')
         sys.exit(0)
@@ -99,11 +99,11 @@ class Client:
 
             # 使用前解压数据
             data = zlib.decompress(data)
-            print('[client]收到<战场数据>:', data)
+            # print('[client]收到<战场数据>:', data)
             data = data.decode()
 
             # 将数据转发给websocket
-            print(self.websk_queue.qsize())
+            # print(self.websk_queue.qsize())
             self.websk_queue.put(data)
 
             # 判断游戏结束
@@ -117,6 +117,7 @@ class Client:
             for in_queue in self.in_queues:
                 # 反序列化info
                 in_queue.put(self.decodeinfo(data))
+                # print(data)
 
             # 获取各坦克的指令发给服务器
             # todo 目前各坦克的指令分别发出，考虑合并更高效

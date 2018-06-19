@@ -16,7 +16,7 @@ import json
 import zlib
 
 # 战场更新频率
-FRAMERATE = 0.05
+FRAMERATE = 0.1
 # 服务ip
 HOST = '176.234.96.91'
 # 服务端口

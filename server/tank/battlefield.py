@@ -7,6 +7,8 @@ from server.tank.tank import *
 from time import  sleep
 import json
 
+# 坦克每次击中减血量
+LIFELOSSPERHIT = 20
 
 class Battlefield(BattleObject):
     """
@@ -58,7 +60,7 @@ class Battlefield(BattleObject):
                             and one_object.type == 'tank' \
                             and other_object.owner != one_object:
                         # 减去1点血
-                        one_object.loss_life(100)
+                        one_object.loss_life(LIFELOSSPERHIT)
                         other_object.suicide()
 
     def get_all_objects(self):
@@ -168,43 +170,3 @@ class Battlefield(BattleObject):
         self.update_tanks()
         self.update_bullets()
         self.collision_stat_update()
-
-    def limit_bound(self, delta=7) -> bool:
-        """
-        检测对象是否到达战场边沿，是的话将对象的阻塞状态设置为True
-        :param delta:定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
-        :return:布尔值，在战场边沿为True
-        """
-        pos = self.get_position()
-        x = pos[0]
-        y = pos[1]
-        width = self.width
-        height = self.height
-        # 定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
-        delta = 7
-        # n_x和n_y是发生碰到边界时反弹后物体的新坐标
-        n_x = x
-        n_y = y
-
-        if x <= width / 2:
-            n_x = x + delta
-
-        if (x + width / 2) >= self.battlefield.width:
-            n_x = x - delta
-
-        if y <= height / 2:
-            n_y = y + delta
-
-        if (y + height / 2) >= self.battlefield.height:
-            n_y = y - delta
-        # 发生反弹位移，说明已经碰到了边界
-        if (n_x, n_y) != (x, y):
-            # 反弹
-            self.set_position(n_x, n_y)
-            self.set_status(self.STATUS_STOP)
-
-            self.block = True
-            return True
-
-        self.block = False
-        return False
