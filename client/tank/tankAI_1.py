@@ -63,7 +63,7 @@ class AI(TankAI):
         :return:
         """
         # 通过以下方式设置坦克的名字，这个名字会显示到战场上（如不设置，坦克默认名字是”无名氏“）
-        self.action.update({'name': 'tom'})
+        self._action.update({'name': 'tom'})
         # 向右侧移动
         self.start_move(self.DIRECTION_RIGHT)
 

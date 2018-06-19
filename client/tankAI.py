@@ -35,11 +35,11 @@ class TankAI():
                │                      ├───oil（剩余油量）
                │
                │  （子弹对象列表）
-               ├───bullets───┬───tank─┬───id（唯一编号）
-               │                      ├───type（物体类型，共2种：tank、bullet）
-               │                      ├───x（x坐标）
-               │                      ├───y（y坐标）
-               │                      ├───owner_id（发射该子弹的坦克id）
+               ├───bullets───┬───bullet─┬───id（唯一编号）
+               │                        ├───type（物体类型，共2种：tank、bullet）
+               │                        ├───x（x坐标）
+               │                        ├───y（y坐标）
+               │                        ├───owner_id（发射该子弹的坦克id）
                └
 
 
@@ -60,7 +60,6 @@ class TankAI():
 
     """
 
-
     STATUS_DEAD = 2
     STATUS_STOP = 3
     STATUS_MOVING = 4
@@ -78,32 +77,32 @@ class TankAI():
         self.name = '无名氏'
         self.battle_id = battle_id
         self.id = tank_id
-        self.in_queue = in_queue
-        self.out_queue = out_queue
+        self._in_queue = in_queue
+        self._out_queue = out_queue
         # 这里通过tank_id和battle_id为action签名，以便在服务端识别
         # 指令示例：{'id': 't20342','battle_id': 'b203402','weapon':2,'direction':2,'fire':'on','status':3}
-        self.action = {'id': self.id,
+        self._action = {'id': self.id,
                        'battle_id': self.battle_id,
-                       'name':self.name}
-        last_action = self.action.copy()
+                       'name': self.name}
+        last_action = self._action.copy()
         self.on_start()
         while True:
 
-            if not self.in_queue.empty():
-                battleinfo = self.in_queue.get()
+            if not self._in_queue.empty():
+                battleinfo = self._in_queue.get()
                 # 找到哪个坦克是自己的坦克
                 self.find_myself(battleinfo)
                 # 执行坦克控制程序逻辑
                 self.on_update(battleinfo)
             # self.update_action('name', self.id)
             # 程序运行之初self.action有可能为空
-            if self.action:
-                if last_action != self.action:
-                    print('action',self.action)
+            if self._action:
+                if last_action != self._action:
+                    print('action', self._action)
                     # 将本次update产生的指令放入输出队列
-                    self.out_queue.put(self.action)
+                    self._out_queue.put(self._action)
                     # 记录本次action
-                    last_action = self.action.copy()
+                    last_action = self._action.copy()
 
             sleep(TankAI.FRAMERATE)
 
@@ -129,15 +128,15 @@ class TankAI():
     def on_update(self, battle):
         """
         内置方法，用于子类继承实现坦克控制程序的控制逻辑
-        :param battle:
+        :param me:玩家自己的坦克对象
+        :param battle:战场对象
         :return:
         """
 
-    def start_move(self, direction: int, velocity: int = 5):
+    def start_move(self, direction: int):
         """
-        内置方法，按照指定方向和速度移动（会一直移动直到调用stop方法，或者发生碰撞）
+        内置方法，按照指定方向开始移动（会一直移动直到调用stop方法，或者发生碰撞）
         :param direction:移动方向
-        :param velocity:移动速度
         """
         self.update_action('status', self.STATUS_MOVING)
         self.update_action('direction', direction)
@@ -173,12 +172,11 @@ class TankAI():
         self.update_action('direction', direction)
 
     def random_fire(self):
-        n = randint(0,5)
+        n = randint(0, 5)
         if n == 5:
             self.start_fire()
         else:
             self.hold_fire()
-
 
     def void_edge(self, battle, delta=7):
         """
@@ -208,7 +206,7 @@ class TankAI():
             flag = True
             directions = directions - {self.DIRECTION_LEFT}
         # 靠近右侧边界
-        print(x + width / 2 + delta,battle.width)
+        print(x + width / 2 + delta, battle.width)
         if (x + width / 2 + delta) >= battle.width:
             flag = True
             directions = directions - {self.DIRECTION_RIGHT}
@@ -220,7 +218,6 @@ class TankAI():
         if (y + height / 2 + delta) >= battle.height:
             flag = True
             directions = directions - {self.DIRECTION_DOWN}
-
 
         return flag, directions
 
@@ -246,4 +243,4 @@ class TankAI():
             #     self.random_turn(avai_direct)
 
     def update_action(self, type, value):
-        self.action.update({type: value})
+        self._action.update({type: value})

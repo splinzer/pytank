@@ -38,8 +38,8 @@ class AI(TankAI):
         内置初始化方法，系统只调用一次，可以用于在on_update前做一些准备工作
         :return:
         """
-        self.action.update({'name': 'jack'})
-        self.start_move(self.DIRECTION_RIGHT, 5)
+        self._action.update({'name': 'jack'})
+        self.start_move(self.DIRECTION_RIGHT)
 
     def on_update(self, battle):
         """
