@@ -6,9 +6,7 @@ from server.tank.barrier import Barrier
 from server.tank.tank import *
 from time import  sleep
 import json
-
-# 坦克每次击中减血量
-LIFELOSSPERHIT = 20
+from server.config import *
 
 class Battlefield(BattleObject):
     """

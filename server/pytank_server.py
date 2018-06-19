@@ -14,15 +14,7 @@ from random import randint
 from server.tank.infocoder import InfoCoder
 import json
 import zlib
-
-# 战场更新频率
-FRAMERATE = 0.1
-# 服务ip
-HOST = '176.234.96.91'
-# 服务端口
-PORT = 9000
-# 缓冲区大小
-BUFFER_SIZE = 2096
+from server.config import *
 
 
 # todo bug:战斗接收后服务端仍在给客户端发消息
