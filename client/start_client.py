@@ -150,7 +150,8 @@ class Client:
         :return:
         """
         # path = os.getcwd() + url + '#' + str(hash)
-        p = Path(Path(__file__).parent, file_name).as_uri() + '#' + str(hash)
+
+        p = Path(Path(__file__).absolute().parent, file_name).as_uri() + '#' + str(hash)
 
         browser = ['chromium-browser', 'firefox']
         avai_browser = list(which_app(browser))
@@ -206,14 +207,16 @@ class Client:
 
     def load_tankais(self):
         # ./tank目录专用于存放坦克AI程序，从该目录导入坦克AI程序
-        p = Path('./tank')
+        # 定位tank AI目录
+        p = Path(Path(__file__).absolute().parent,'tank')
         # 仅筛选出.py文件
         pyname = list(p.glob('*.py'))
 
         modules = []
         for fullname in pyname:
+            # 因为要以模块形式导入，所以只截取文件名
             name = Path(fullname).stem
-            m = import_module(f'tank.{name}')
+            m = import_module(f'.{name}', 'client.tank')
             # 排除其他非坦克AI的.py文件
             if 'AI' in dir(m):
                 modules.append(m)
