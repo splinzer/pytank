@@ -8,32 +8,55 @@ Pytank is a tank game for python coder
 
 You will write a python code to control your tank and fight with your enemies.
 
-## 如何启动 how to start
+## 如何启动 HOW TO START
 
 在终端运行以下命令，就可以看到坦克开始战斗了（内置了2个坦克控制代码）：
 
-run below commad in terminal to start a pytank game (there are two tank code already):
+Run below commad in terminal to start a pytank game (there are two tank code already):
+```bash
+bash run.bash
+```
 
-> bash run.bash
+## 游戏玩法 HOW TO PLAY
 
-## 运行环境 enviroment
-
-- python 3.6
-
-- ubuntu 16.04 LTS（目前仅在此平台上进行了测试 only tested on this system）
-
-## 游戏玩法 how to play
-
-首先打开client/tank/目录，这里看到的tankAI_*.py就是用来控制坦克的代码。
+首先打开**client/tank/**目录，这里看到的tankAI_.py就是用来控制坦克的代码。
 你可以以此为模板进行修改，你只需要修改以下2点：
-1. 在on_start方法里，通过以下形式为自己的坦克命名
 
-   > self.set_name('Tom')
+Open **client/tank** directory first,you will find there are some .py file named 'tankAI_.py' which is the code used to control tanks.
+According to these template code you just need two steps to get your own tank code:
 
-2. 在on_update方法里，实现自己的坦克控制代码。
-on_update方法提供的battle参数提供了不断更新的战场对象（默认0.1秒更新一次）。通过判断战场的状况来控制你坦克的行为。
+1. 在`on_start`方法里，通过以下方法为自己的坦克命名
 
-## 坦克控制代码
+   In `on_start` method,named your tank with below method
+
+   ```python
+   self.set_name('Tom')
+   ```
+2. 在`on_update`方法里，实现自己的坦克控制代码。
+
+   `on_update`方法提供的battle参数提供了不断更新的战场对象（默认0.1秒更新一次）。通过判断战场的状况来控制你坦克的行为。
+
+   In `on_update` method implement your own tank code.
+
+   `on_update` method support the battle parameter which update per 0.1 second.You can adjust your tank by watching this battle object.
+
+   
+   ```python
+   def on_update(self, battle):
+    """
+    内置方法，该方法会被循环调用，请在该方法中实现tank的控制逻辑
+    :param battle: 战场对象，通过该对象可以获得关于战场的一切信息，包括：所有坦克、子弹的信息
+    :return: 无
+    """
+    tanks = battle.tanks
+    bullets = battle.bullets
+
+
+    self.random_move(battle)
+    self.random_fire()
+    ```
+
+## 坦克控制类 TANK CONTROL CLASS
 AI类用于控制坦克的移动、攻击，你应该在这个类里实现所有坦克的控制逻辑
 
     - on_update方法的第二个参数battle对象专门用于获取战场信息，该对象结构如下：
@@ -79,3 +102,9 @@ AI类用于控制坦克的移动、攻击，你应该在这个类里实现所有
 
     注意，在一次update函数调用中，tank的同一种状态如果发生多次变化，则以最后一次状态为准
     ./tank目录专用于存放坦克AI程序，系统会自从该目录导入坦克AI程序，请确保所有逻辑都放在一个文件中
+
+## 运行环境 ENVIREMONT
+
+- python 3.6
+
+- ubuntu 16.04 LTS（目前仅在此平台上进行了测试 only tested on this system）
