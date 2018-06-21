@@ -15,7 +15,7 @@ import sys
 import os
 import subprocess
 from client.config import *
-
+from client.myutils import which_app
 
 class Client:
     def __init__(self):
@@ -150,8 +150,14 @@ class Client:
         """
         # path = os.getcwd() + url + '#' + str(hash)
         p = Path(Path.cwd(),url).as_uri() + '#' + str(hash)
-        subprocess.Popen(['chromium-browser', p])
-        print('[server]打开<本地浏览器>')
+
+        browser = ['chromium-browser', 'firefox']
+        avai_browser = list(which_app(browser))
+        if avai_browser:
+            subprocess.Popen([avai_browser[0], p])
+            print('[server]打开<本地浏览器>')
+        else:
+            sys.exit(f'无法打开战斗，缺少浏览器：{browser}')
         # os.system('chromium-browser ' + os.getcwd() + url + ' 2>/dev/null&')
 
     def send_to_server(self, action_str):

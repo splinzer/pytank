@@ -105,6 +105,7 @@
             let life = Number(rectObject.life);
 
 
+
             target_obj = exists(rectObject);
             if (target_obj) {
                 // 判断目标是否已经死亡
@@ -117,7 +118,9 @@
 
                 if (target_obj.ro_type == 'tank') {
                     target_obj.item(0).set({'angle': angle});
+                    // target_obj.item(1).set({'width': width * life / 100});
                     target_obj.set({'left': left, 'top': top});
+
                 }
                 else {
 
@@ -143,7 +146,7 @@
                         let rect = new fabric.Rect({
                             top: -width / 2 - 4,
                             left: -width / 2,
-                            width: width * life / 100,
+                            width: width,
                             height: 2,
                             fill: 'red',
                             originX: 'left',
