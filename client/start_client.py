@@ -2,6 +2,9 @@
 # @author : Guoxi
 # @email  : splinzer@gmail.com
 # @time   : 2018 下午7:47
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from socket import *
 from time import sleep
 from multiprocessing import Process, Queue
@@ -11,8 +14,6 @@ from pathlib import Path
 from client.clientcoder import Coder
 import json
 import zlib
-import sys
-import os
 import subprocess
 from client.config import *
 from client.myutils import which_app

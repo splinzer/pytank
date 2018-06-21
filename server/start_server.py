@@ -2,13 +2,15 @@
 # @author : Guoxi
 # @email  : splinzer@gmail.com
 # @time   : 2018 下午6:30
+
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from server.tank.tank import *
 from server.tank.battlefield import *
 from server.tank.barrier import Barrier
 from multiprocessing import Queue, Process, Manager
 from time import sleep, time
-import os
-from select import *
 from socket import *
 from random import randint
 from server.tank.infocoder import InfoCoder
