@@ -128,7 +128,7 @@ class Client:
         # 在本地启动websocket
         server = SimpleWebSocketServer('localhost', self.websocket_port, SimpleBroadServer)
         # 打开浏览器观看战斗
-        self.open_websocket_client(WEBSOCKET_CLIENT_URL, self.websocket_port)
+        self.open_websocket_client('webworker.html', self.websocket_port)
         server.serveforever()
 
     def get_free_tcp_port(self):
@@ -142,15 +142,15 @@ class Client:
         tcp.close()
         return port
 
-    def open_websocket_client(self, url, hash):
+    def open_websocket_client(self, file_name, hash):
         """
         在本地浏览其中观看战斗
-        :param url:本地地址
+        :param file_name:文件名称（需要与本文件同目录）
         :param hash:地址后#号后的内容，用于给页面传参
         :return:
         """
         # path = os.getcwd() + url + '#' + str(hash)
-        p = Path(Path.cwd(),url).as_uri() + '#' + str(hash)
+        p = Path(Path(__file__).parent, file_name).as_uri() + '#' + str(hash)
 
         browser = ['chromium-browser', 'firefox']
         avai_browser = list(which_app(browser))

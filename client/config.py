@@ -12,8 +12,6 @@ HOST = '176.234.96.91'
 PORT = 9000
 # webscoket服务器端口
 WEBSOCKET_PORT = 8000
-# 观战网页文件的本地地址
-WEBSOCKET_CLIENT_URL = './webworker.html'
 # 坦克AI数量有效范围
 ALLOW_COUNT = (2, 5)
 # 缓冲区大小
