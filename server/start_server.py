@@ -17,7 +17,9 @@ from server.tank.infocoder import InfoCoder
 import json
 import zlib
 from server.config import *
-
+import signal
+# 避免僵尸进程
+signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
 # todo bug:战斗接收后服务端仍在给客户端发消息
 
