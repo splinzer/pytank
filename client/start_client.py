@@ -3,6 +3,7 @@
 # @email  : splinzer@gmail.com
 # @time   : 2018 下午7:47
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from socket import *
@@ -17,6 +18,10 @@ import zlib
 import subprocess
 from client.config import *
 from client.myutils import which_app
+import signal
+# 避免僵尸进程
+signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+
 
 class Client:
     def __init__(self):
@@ -208,7 +213,7 @@ class Client:
     def load_tankais(self):
         # ./tank目录专用于存放坦克AI程序，从该目录导入坦克AI程序
         # 定位tank AI目录
-        p = Path(Path(__file__).absolute().parent,'tank')
+        p = Path(Path(__file__).absolute().parent, 'tank')
         # 仅筛选出.py文件
         pyname = list(p.glob('*.py'))
 
