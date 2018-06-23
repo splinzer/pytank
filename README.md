@@ -40,7 +40,7 @@ According to these template code you just need two steps to get your own tank co
 
    `on_update` method support the battle parameter which update per 0.1 second.You can adjust your tank by watching this battle object.
 
-   
+
    ```python
    def on_update(self, battle):
     """
