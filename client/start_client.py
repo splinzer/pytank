@@ -17,7 +17,7 @@ import json
 import zlib
 import subprocess
 from client.config import *
-from client.myutils import which_app
+from myutils.utils import which_app
 import signal
 # 避免僵尸进程
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
@@ -43,7 +43,7 @@ class Client:
         websk_p.daemon = True
         websk_p.start()
 
-        self.s = socket(AF_INET, SOCK_DGRAM)
+        self.s = socket(AF_INET, SOCK_STREAM)
         self.s.settimeout(3)
         self.s.connect((HOST, PORT))
         self.main()

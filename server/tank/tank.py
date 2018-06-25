@@ -85,7 +85,6 @@ class Tank(BattleObject):
         pos = self.get_position()
         x = pos[0]
         y = pos[1]
-        print(x,y )
         width = self.width
         height = self.height
         # 定义偏移量，如果对象碰到边界，则按照该偏移量反弹，目的是避免物体被困住。
@@ -96,7 +95,6 @@ class Tank(BattleObject):
 
         if x <= width / 2:
             n_x = x + delta
-        print(x + width / 2, self.battlefield.width)
         if (x + width / 2) >= self.battlefield.width:
             n_x = x - delta
 

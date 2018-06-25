@@ -105,7 +105,6 @@
             let life = Number(rectObject.life);
 
 
-
             target_obj = exists(rectObject);
             if (target_obj) {
                 // 判断目标是否已经死亡
@@ -153,7 +152,10 @@
                             originY: 'center'
                         });
                         let fontSize = 10;
-                        let text = new fabric.Text(rectObject.name, {
+
+                        let rectObjectName = rectObject.name ? rectObject.name : 'undefined';
+
+                        let text = new fabric.Text(rectObjectName, {
                             top: width / 2 + fontSize,
                             fontSize: fontSize,
                             originX: 'center',

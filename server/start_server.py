@@ -17,25 +17,26 @@ from server.tank.infocoder import InfoCoder
 import json
 import zlib
 from server.config import *
+from select import *
 import signal
 # 避免僵尸进程
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
-# todo bug:战斗接收后服务端仍在给客户端发消息
 
 class GameServer:
 
     def __init__(self):
-        self.sock = socket(AF_INET, SOCK_DGRAM)
+        # todo 将数据通信方式由udp改为tcp
+        self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.sock.bind((HOST, PORT))
-
+        self.sock.listen(5)
         # 创建进程内存共享对象
         shared_memory = Manager()
 
         # 进程共享对象：战场id和客户端地址对应关系字典
         # 形如：{'b1528977296': ('127.0.0.1', 44436)}
-        self.bid_to_addr_shared = shared_memory.dict()
+        self.bid_to_sock_shared = shared_memory.dict()
 
         # 进程共享对象：战场id和战场对象字典
         # 形如：{'b1528977296': <server.tank.battlefield.Battlefield object at 0x7f88fb1bbb70>}
@@ -71,61 +72,80 @@ class GameServer:
         6.服务端反馈战斗创建成功消息给客户端：ok|b209203420|t234202|t230920|t224092
         
         '''
+        # 创建io事件地图
+        s_dict = {self.sock.fileno():self.sock}
+        # 创建epoll对象
+        p = epoll()
+        # 将套接字加入到关注
+        p.register(self.sock, (EPOLLIN | EPOLLET))
+
         while True:
             # print(f'[server]战场字典:{self.bid_to_battle_shared}')
-            print(f'[server]客户端字典:{self.bid_to_addr_shared}')
-            # 验证用户密码
-            data, addr = self.sock.recvfrom(BUFFER_SIZE)
-            # 以addr作为客户端唯一标识，形如：('127.0.0.1', 39194) ('127.0.0.1', 48078)
-            data = data.decode()
+            # todo 战斗结束后关闭关闭socket
 
-            if data == '':
-                continue
-            elif data[0:5] == 'LOGIN':
-                username, password, count = data[5:].split('|')
-                # 客户端身份验证（无数据或客户端用户名密码验证失败）
-                if self.verify_user(username, password):
-                    print(f'[server]登录成功<客户端>来自<{addr}>:{data}')
-                    # 按照客户端需要创建拥有指定坦克数量的战斗
-                    bt, tank_id_list = self.createBattle(int(count))
+            plist = p.poll()
 
-                    # 更新共享对象
-                    self.bid_to_battle_shared.update({bt.id: bt})
-
-                    self.bid_to_addr_shared.update({bt.id: addr})
-
-                    # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的id列表）
-                    msg = 'ok|' + bt.id + '|' + '|'.join(tank_id_list)
-
-                    # 回执发送给客户端
-                    self.sock.sendto(msg.encode(), addr)
+            for fd, event  in plist:
+                # 当套接字准备就绪
+                if fd == self.sock.fileno():
+                    nsk, addr = self.sock.accept()
+                    p.register(nsk.fileno(), EPOLLIN|EPOLLET)
+                    s_dict[nsk.fileno()] = nsk
                 else:
-                    continue
+                    try:
 
-            elif data[0:8] == 'GAMEOVER':
-                for _bid, _addr in self.bid_to_addr_shared.items():
-                    if addr == addr:
-                        self.close_battle(_bid)
+                        nsk = s_dict[fd]
 
-            else:
-                # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
-                # print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
-                # 把客户端指令存入消息队列，由mainloop进程进行处理
+                        data = nsk.recv(BUFFER_SIZE)
 
-                # 只接收已建立过连接的客户端数据
-                if self.is_connected(addr):
-                    self.in_queue.put(data)
+                        if not data:
+                            p.unregister(fd)
+                            nsk.close()
+                            s_dict.pop(fd)
+                            continue
 
-                sleep(FRAMERATE)
+                        data = data.decode()
+                        print(f'[server]{data}')
 
-    def is_connected(self, addr: tuple):
-        """
-        判断客户端是否已与服务器建立了连接
-        :param addr:客户端ip和端口
-        :return:
-        """
-        return addr in self.bid_to_addr_shared.values()
-        pass
+
+                        if data[0:5] == 'LOGIN':
+                            username, password, count = data[5:].split('|')
+                            # 客户端身份验证（无数据或客户端用户名密码验证失败）
+                            if self.verify_user(username, password):
+                                print(f'[server]登录成功<客户端>来自<{addr}>:{data}')
+                                # 按照客户端需要创建拥有指定坦克数量的战斗
+                                bt, tank_id_list = self.createBattle(int(count))
+
+                                # 更新共享对象
+                                self.bid_to_battle_shared.update({bt.id: bt})
+
+                                self.bid_to_sock_shared.update({bt.id: nsk})
+
+                                # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的id列表）
+                                msg = 'ok|' + bt.id + '|' + '|'.join(tank_id_list)
+
+                                # 回执发送给客户端
+                                nsk.send(msg.encode())
+                            else:
+                                continue
+
+                        elif data[0:8] == 'GAMEOVER':
+                            for _bid, _sock in self.bid_to_sock_shared.items():
+                                if nsk == _sock:
+                                    self.close_battle(_bid)
+
+                        else:
+                            # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
+                            # print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
+                            # 把客户端指令存入消息队列，由mainloop进程进行处理
+
+                            # 只接收已建立过连接的客户端数据
+                            self.in_queue.put(data)
+
+                            sleep(FRAMERATE)
+                    except Exception:
+                        pass
+
 
     def close_battle(self, battle_id):
         """
@@ -133,7 +153,7 @@ class GameServer:
         :return:
         """
         # 从共享对象中清除该战斗
-        del self.bid_to_addr_shared[battle_id]
+        del self.bid_to_sock_shared[battle_id]
         del self.bid_to_battle_shared[battle_id]
 
     def verify_user(self, username, password):
@@ -163,6 +183,7 @@ class GameServer:
                 # 取出指令，示例格式："{'battle_id':'b20340','id':'t20394','weapon':2,'direction':2,'fire':'on','status':3}"
                 battleinfo = self.in_queue.get()
                 # 将序列化的指令恢复成tank对象
+                print(battleinfo)
                 tankinfo = json.loads(battleinfo)
                 # 在客户端启动之初，会因收到不完整的指令导致错误，这里使用需要异常处理
 
@@ -202,13 +223,13 @@ class GameServer:
             if not self.out_queue.empty():
                 bt = self.out_queue.get()
                 bid = bt.id
-                if bid in self.bid_to_addr_shared:
+                if bid in self.bid_to_sock_shared:
                     coder = InfoCoder()
                     tank_info = coder.encoder(bt)
                     # 传之前先对数据进行压缩
                     tank_info = zlib.compress(tank_info.encode())
                     # 将数据发送给客户端
-                    self.sock.sendto(tank_info, self.bid_to_addr_shared[bid])
+                    self.bid_to_sock_shared[bid].send(tank_info)
 
                 # for addr in self.bid_to_addr_shared.keys():
                 #     # todo Bug：数据没有根据不同的战场分别发出，无法适应多战斗场景
