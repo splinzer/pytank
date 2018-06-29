@@ -32,7 +32,7 @@ import struct
 import json
 
 
-class Ptcp:
+class JsonTcp:
     """tcp打包类
     该类解决使用tcp进行通信的粘包问题，解决办法是构造固定长度的消息head+变长消息body，在消息head中记录消息body长度和消息类型编号，
     在接收时首先读取消息头，并根据消息body的长度获取消息body。
@@ -41,77 +41,96 @@ class Ptcp:
 
         from socket import socket
         import struct
-        from ptcp import Ptcp
-
-        # 定义回调函数
-        def callback(sock, head, body):
-            print(head, body)
+        from ptcp import JsonTcp
 
         with socket() as s:
             s.bind((‘’, 1234))
             s.listen(1)
-            while True:
-                conn, addr = s.accept()
-                with conn:
-                    Ptcp.unpack(conn, callback)
+            conn, addr = s.accept()
+            with conn:
+                print(JsonTcp.recv_one(conn))
 
     - 客户端例子：
 
         from socket import socket
-        from ptcp import Ptcp
+        from ptcp import JsonTcp
 
         client = socket()
         client.connect(('',1234))
 
         # 正常数据包定义
-        sendData = Ptcp.pack({'say':"hello world"}, 101)
+        sendData = JsonTcp.pack(body={'say':"hello world"}, cmd=101)
         client.send(sendData)
 
     """
-    fmt = '!2I'
+    # 消息头格式定义
+    fmt = '!I'
+    # 计算消息头大小
     headerSize = struct.calcsize(fmt)
+    bufferSize = 1024
 
     @classmethod
-    def pack(cls, body=None, cmd=1)-> bytes:
+    def pack(cls, data=None, status: str = None, name: str = None) -> bytes:
         """tcp打包方法
 
-        :param body: 消息体，可以是Python的基本数据类型
-        :param cmd: 整数，用于表示消息类型
+        :param data: 消息体，可以是Python的基本数据类型
+        :param status:状态
+        :param name:
         :return: 以bytes形式返回打包后的数据
         """
-        assert type(cmd) is int, 'cmd参数必须为正整数'
-        assert body, 'body参数不能为空'
-        data = json.dumps(body).encode()
-        header = [cmd, len(data)]
-        headPack = struct.pack(cls.fmt, *header)
-        return headPack + data
+        assert data, 'data参数不能为空'
+        msg = {
+            'status': status,
+            'name': name,
+            'data': data
+        }
+        msg = json.dumps(msg).encode()
+
+        headPack = struct.pack(cls.fmt, len(msg))
+        return headPack + msg
 
     @classmethod
-    def unpack(cls, sock: socket, callback=None):
-        """tcp解包方法
-        param sock:套接字
-        param callback:回调函数callback(sock, head, body)，接受3个参数head和body，当解包成功后自动调用
+    def recv_one(cls, sock: socket):
+        """从指定socket只接收一个数据报
+        :param sock: 套接字
+        :return: 数据报，格式为 (body, sock)，如超时返回None
+        """
+        try:
+            it = cls.recvfrom(sock, pack_num=1)
+            return next(it)
+        except StopIteration:
+            return
+
+    @classmethod
+    def recvfrom(cls, sock: socket, pack_num=0):
+        """从指定socket接收tcp数据并解包
+        :param sock:套接字
+        :param pack_num:想要获取的数据包个数，默认为0表示不限数量。当指定了大于0的数字之后，该方法在返回了指定数量的数据包后停止循环。
+        :return:返回一个iterable对象 (body,sock)
         """
 
         dataBuffer = bytes()
-
+        # 记录已获取的数据报个数
+        n = 0
         while True:
-            data = sock.recv(1024)
+            data = sock.recv(cls.bufferSize)
             headerSize = cls.headerSize
             if data:
                 # 把数据存入缓冲区，类似于push数据
                 dataBuffer += data
                 while True:
+                    # 当已经获取到了指定数量的数据报，且n不为默认值时，退出方法
+                    if n == pack_num and n:
+                        return
                     # 只有接收完头部才能继续
                     if len(dataBuffer) < headerSize:
                         # print("数据包（%s Byte）小于消息头部长度，跳出小循环" % len(dataBuffer))
                         break
 
                     # 读取包头
-                    # struct中:!代表Network order，2I代表2个unsigned int数据
-                    headPack = struct.unpack('!2I', dataBuffer[:headerSize])
-                    cmd = headPack[0]
-                    bodySize = headPack[1]
+                    # struct中:!代表Network order，I代表2个unsigned int数据
+                    headPack = struct.unpack(cls.fmt, dataBuffer[:headerSize])
+                    bodySize = headPack[0]
 
                     # 分包情况处理，跳出函数继续接收数据
                     if len(dataBuffer) < headerSize + bodySize:
@@ -120,10 +139,13 @@ class Ptcp:
                     # 读取消息正文的内容
                     body = dataBuffer[headerSize:headerSize + bodySize]
                     body = json.loads(body)
-                    # 调用回调函数返回解析结果
-                    callback(sock, cmd, body)
+
                     # 粘包情况的处理
                     dataBuffer = dataBuffer[headerSize + bodySize:]  # 获取下一个数据包，类似于把数据pop出
+
+                    # 调返回解析结果
+                    yield (body, sock)
+                    n += 1
             else:
                 print('客户端断开', sock)
                 sock.close()

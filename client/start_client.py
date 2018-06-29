@@ -17,8 +17,9 @@ import json
 import zlib
 import subprocess
 from client.config import *
-from myutils.utils import which_app
+from myutils.utils import which_app, JsonTcp
 import signal
+
 # 避免僵尸进程
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
@@ -44,14 +45,15 @@ class Client:
         websk_p.start()
 
         self.s = socket(AF_INET, SOCK_STREAM)
-        self.s.settimeout(3)
+        self.s.settimeout(TIMEOUT)
         self.s.connect((HOST, PORT))
         self.main()
 
     def game_over(self, quit_info='游戏结束'):
         # print(quit_info)
         # 发送游戏结束回执
-        self.s.send(b'GAMEOVER')
+        data = JsonTcp.pack(name='gameover',data='')
+        self.s.send(data)
         sys.exit(0)
 
     def main(self):
@@ -64,16 +66,20 @@ class Client:
             self.check_tankAIs(tank_count)
             # 尝试登录，并如能登录，则告知服务器创建tankcount个坦克的战场
             username, password = self.getverifyinfo()
-            msg = 'LOGIN' + username + '|' + password + '|' + str(tank_count)
-            self.s.send(msg.encode())
-            # 服务器响应
-            response = self.s.recv(BUFFER_SIZE).decode()
-            # 响应内容格式：'ok|battle_id|tank_id1|tank_id2|...'
-            response = response.split('|')
-            if response[0] == 'ok':
+
+            msg = {'username': username,
+                   'password': password,
+                   'tank_count': tank_count}
+
+            self.s.send(JsonTcp.pack(data=msg ,name='login'))
+
+            # 获取服务器响应
+
+            data, _ = JsonTcp.recv_one(self.s)
+            if data['status'] == 'ok':
                 print('[client]登录成功')
-                self.battle_id = response[1]
-                self.tank_id_list = response[2:]
+                self.battle_id = data['battle_id']
+                self.tank_id_list = data['tank_id_list']
                 # 初始化坦克AI进程
                 self.init_tanks_process()
                 break
@@ -84,42 +90,39 @@ class Client:
         # 主循环
         while True:
             # 接收服务端战场信息
-            try:
-                data = self.s.recv(BUFFER_SIZE)
-            except timeout:
-                self.game_over('等待服务器数据超时')
+            for data, _ in JsonTcp.recvfrom(self.s):
 
-            # 使用前解压数据
-            data = zlib.decompress(data)
-            # print('[client]收到<战场数据>:', data)
-            data = data.decode()
+                # 使用前解压数据
+                data = zlib.decompress(data)
+                # print('[client]收到<战场数据>:', data)
+                data = data.decode()
 
-            # 将数据转发给websocket
-            # print(self.websk_queue.qsize())
-            self.websk_queue.put(data)
+                # 将数据转发给websocket
+                # print(self.websk_queue.qsize())
+                self.websk_queue.put(data)
 
-            # 判断游戏结束
-            if data.rfind('gameover:True') != -1:
-                # 等待2秒，确保浏览器收到了游戏结束信号
-                sleep(2)
-                self.game_over()
-                break
+                # 判断游戏结束 todo 游戏结束编码调整
+                if data.rfind('gameover:True') != -1:
+                    # 等待2秒，确保浏览器收到了游戏结束信号
+                    sleep(2)
+                    self.game_over()
+                    break
 
-            # 将信息通过queue转发给各坦克AI和websocket
-            for in_queue in self.in_queues:
-                # 反序列化info
-                in_queue.put(self.decodeinfo(data))
-                # print(data)
+                # 将信息通过queue转发给各坦克AI和websocket
+                for in_queue in self.in_queues:
+                    # 反序列化info
+                    in_queue.put(self.decodeinfo(data))
+                    # print(data)
 
-            # 获取各坦克的指令发给服务器
-            # todo 目前各坦克的指令分别发出，考虑合并更高效
-            for out_queue in self.out_queues:
-                if not out_queue.empty():
-                    action_str = out_queue.get()
-                    self.send_to_server(action_str)
-                else:
-                    pass
-                    # print('[client]暂无<指令>')
+                # 获取各坦克的指令发给服务器
+                # todo 目前各坦克的指令分别发出，考虑合并更高效
+                for out_queue in self.out_queues:
+                    if not out_queue.empty():
+                        action_str = out_queue.get()
+                        self.send_to_server(action_str)
+                    else:
+                        pass
+                        # print('[client]暂无<指令>')
         os.wait()
 
     def start_websocket_server(self):
@@ -169,10 +172,10 @@ class Client:
 
     def send_to_server(self, action_str):
         # 使用json对指令进行序列化处理
-        action_json = json.dumps(action_str)
+        action_json = JsonTcp.pack(data=action_str,name='action')
         # print('[client]发出<指令>:', action_json)
         # 发给服务端
-        self.s.send(action_json.encode())
+        self.s.send(action_json)
 
     def check_tankAIs(self, tank_count):
         if ALLOW_COUNT[0] > tank_count > ALLOW_COUNT[1]:

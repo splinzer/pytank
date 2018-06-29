@@ -4,6 +4,7 @@
 # @time   : 2018 下午6:30
 
 import os, sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from server.tank.tank import *
@@ -19,6 +20,8 @@ import zlib
 from server.config import *
 from select import *
 import signal
+from myutils.utils import JsonTcp
+
 # 避免僵尸进程
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
@@ -57,8 +60,6 @@ class GameServer:
         send_p.daemon = True
         send_p.start()
 
-
-
         # todo 实现多个战斗同时进行
         # 服务端使用客户端的ip和端口号作为客户端唯一标识，每次客户端传给服务端的消息头部都加上该标识
         # 等待获取客户端登录请求，验证通过后，按照客户端要求创建战斗并给到客户端反馈
@@ -73,7 +74,7 @@ class GameServer:
         
         '''
         # 创建io事件地图
-        s_dict = {self.sock.fileno():self.sock}
+        s_dict = {self.sock.fileno(): self.sock}
         # 创建epoll对象
         p = epoll()
         # 将套接字加入到关注
@@ -85,31 +86,36 @@ class GameServer:
 
             plist = p.poll()
 
-            for fd, event  in plist:
+            for fd, event in plist:
                 # 当套接字准备就绪
                 if fd == self.sock.fileno():
                     nsk, addr = self.sock.accept()
-                    p.register(nsk.fileno(), EPOLLIN|EPOLLET)
+                    p.register(nsk.fileno(), EPOLLIN | EPOLLET)
                     s_dict[nsk.fileno()] = nsk
                 else:
+
+                    nsk = s_dict[fd]
+
+                    # data = nsk.recv(BUFFER_SIZE)
+
+                    JsonTcp.bufferSize = BUFFER_SIZE
+
                     try:
+                        data, _ = JsonTcp.recv_one(nsk)
 
-                        nsk = s_dict[fd]
-
-                        data = nsk.recv(BUFFER_SIZE)
-
-                        if not data:
-                            p.unregister(fd)
-                            nsk.close()
-                            s_dict.pop(fd)
-                            continue
-
-                        data = data.decode()
                         print(f'[server]{data}')
 
+                        # cmd 的取值意义对照
+                        # 0：结束
+                        # 1：登录
+                        # 2：指令
 
-                        if data[0:5] == 'LOGIN':
-                            username, password, count = data[5:].split('|')
+                        # 登录
+                        if data['name'] == 'login':
+                            username = data['username']
+                            password = data['password']
+                            count = data['tank_count']
+
                             # 客户端身份验证（无数据或客户端用户名密码验证失败）
                             if self.verify_user(username, password):
                                 print(f'[server]登录成功<客户端>来自<{addr}>:{data}')
@@ -122,19 +128,21 @@ class GameServer:
                                 self.bid_to_sock_shared.update({bt.id: nsk})
 
                                 # 告知客户端战斗已经成功创建（返回该战斗中包含的坦克的id列表）
-                                msg = 'ok|' + bt.id + '|' + '|'.join(tank_id_list)
-
+                                msg = {
+                                    'battle_id': bt.id,
+                                    'tank_id_list': tank_id_list
+                                }
                                 # 回执发送给客户端
-                                nsk.send(msg.encode())
+                                nsk.send(JsonTcp.pack(data=msg,status='ok'))
                             else:
                                 continue
-
-                        elif data[0:8] == 'GAMEOVER':
+                        # 游戏结束
+                        elif data['name'] == 'gameover':
                             for _bid, _sock in self.bid_to_sock_shared.items():
                                 if nsk == _sock:
                                     self.close_battle(_bid)
-
-                        else:
+                        # 游戏指令
+                        elif data['name'] == 'action':
                             # 指令示例：{'weapon':2,'direction':2,'fire':'on','status':3}
                             # print(f'[server]收到<客户端指令>来自<{addr}>:{data}')
                             # 把客户端指令存入消息队列，由mainloop进程进行处理
@@ -143,9 +151,11 @@ class GameServer:
                             self.in_queue.put(data)
 
                             sleep(FRAMERATE)
-                    except Exception:
-                        pass
 
+                    except Exception:
+                        p.unregister(fd)
+                        nsk.close()
+                        s_dict.pop(fd)
 
     def close_battle(self, battle_id):
         """

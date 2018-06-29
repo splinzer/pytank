@@ -7,7 +7,7 @@ time   : 2018 下午8:17
 # 战场更新频率，建议值为0.1
 FRAMERATE = 0.1
 # 服务器ip
-HOST = '176.234.96.91'
+HOST = ''
 # 服务端端口
 PORT = 9000
 # webscoket服务器端口
@@ -16,3 +16,5 @@ WEBSOCKET_PORT = 8000
 ALLOW_COUNT = (2, 5)
 # 缓冲区大小
 BUFFER_SIZE = 2096
+# 服务端连接超时时间设置
+TIMEOUT = 3
